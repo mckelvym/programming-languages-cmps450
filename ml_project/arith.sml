@@ -1,0 +1,1183 @@
+(*
+Class			CMPS450
+Section			001
+Problem			ML Type Checking Project
+Name			McKelvy, James Markus
+CLID			jmm0468
+Due Date		10:15am December 6, 2007 (Thursday)
+*)
+
+use "symtab1.sml"; (* Use symbol table *)
+
+open Control;
+Control.Print.printLength := 1000;
+Control.Print.printDepth := 350;
+Control.Print.stringDepth := 250;
+
+datatype token =
+	 id_token of string
+       | num_token of string
+       | string_token of string
+       | list_token of string
+       | left_parenthesis
+       | right_parenthesis
+       | plus_token
+       | minus_token
+       | times_token
+       | divide_token
+       | div_token
+       | mod_token
+       | concat_token
+       | list_coloncolon_token
+       | list_atsign_token
+       | list_start_token
+       | list_comma_token
+       | list_end_token
+       | list_nil_token
+       | bool_token
+       | val_token
+       | equal_token
+       | semicolon_token
+       | boolean_expr_token
+       | if_token
+       | then_token
+       | else_token
+       | let_token
+       | in_token
+       | end_token
+       | fun_token;
+
+datatype Expr =
+	 Term_as_Expr of (Term * Atype)
+       | Plus_Expr of (Term * Expr * Atype)
+       | Minus_Expr of (Term * Expr * Atype)
+       | String_Expr of (Term * Expr * Atype)
+       | List_ColonColon_Expr of (Term * Expr * Atype)
+       | List_AtSign_Expr of (Term * Expr * Atype)
+     and Term =
+	 Factor_as_Term of (Factor * Atype)
+       | Multiply_Term of (Factor * Term * Atype)
+       | Divide_Term of (Factor * Term * Atype)
+       | Div_Term of (Factor * Term * Atype)
+       | Mod_Term of (Factor * Term * Atype)
+       | String_Term of (Factor * Term * Atype)
+     and Factor =
+	 Id_as_Factor of (string * Atype)
+       | Number_as_Factor of (string * Atype)
+       | String_as_Factor of (string * Atype)
+       | Boolean_as_Factor of (string * Atype)
+       | List_as_Factor of (string * Atype)
+       | IfThenElse_as_Factor of (Atype)
+       | Let_as_Factor of (Atype)
+       | Fun_as_Factor of (string * Atype)
+       | Parenthesized_Expr_as_Factor of (Expr * Atype);
+
+datatype Decl = 
+	 Val_Declaration of (string * Atype);
+
+datatype Both =
+	 Expr of (Expr)
+       | Decl of (Decl);
+
+(*
+Looks for the first occurrence of a period and returns
+true immediately (assumes it is real type), if it does not find a
+period then it keeps searching until it reaches the end of the list
+and then returns false.
+*)
+fun int_or_real_type_helper (current_char::chars) = 
+    (case current_char
+      of #"." => true
+       | #"," => false
+       | _ => int_or_real_type_helper (chars))
+  | int_or_real_type_helper ([]) = false
+
+(*
+This is supplied a num_token and searches the string to
+determine if it is RealType or IntType, returns either of these or
+Error if a num_token was not supplied.
+*)
+fun int_or_real_type (num_token(num_string)) = 
+    if (int_or_real_type_helper (explode(num_string)) = true) then RealType
+    else IntType
+  | int_or_real_type (token) = Error
+
+(*
+This is supplied some Atype and if it is some form of
+ListType subtype, then it recursively looks for the base type of
+subtype, returning the result. If Atype is not of ListType subtype,
+then the type that is supplied is returned.
+*)
+fun get_base_type (sometype) = 
+    (case sometype
+      of ListType subtype => get_base_type (subtype)
+       | _ => sometype
+    )
+
+(*
+This is supplied some Atype and if it is some form of
+ListType subtype, then subtype is returned, otherwise Error is
+returned. 
+*)
+fun get_sub_type (sometype) =
+    (case sometype
+      of ListType subtype => subtype
+       | _ => Error
+    )
+
+(*
+This is used for val declarations when it is of the form
+"val h::t = [1,2];" or something similar. This function is supplied
+some tokens (usually tokens_after_val) and returns all of the tokens
+it finds as long as they are of some id_token or
+list_coloncolon_token. Usually these are all of the tokens before the
+equal_token.
+*)
+fun get_pattern_helper_upto_equals (tokens) =
+    (case tokens
+      of (SOME (id_token id_name)::rest) =>
+	 (id_token id_name)::get_pattern_helper_upto_equals(rest)
+       | (SOME (list_coloncolon_token)::rest) =>
+	 list_coloncolon_token::get_pattern_helper_upto_equals(rest)
+       | _ => []
+    )
+
+(*
+This is used for val declarations and returns all of the
+tokens from the equal_token onward. The type of val declarations when
+this is used is when it is of the form "val h::t = [1,2];" and the
+argument is usually tokens_after_val. It will look for an equal token
+and when it find it will return the equal_token and all tokens after
+it. 
+*)
+fun get_pattern_helper_after_equals (tokens) =
+    (case tokens
+      of (SOME (equal_token)::rest) => tokens
+       | (SOME (other)::rest) => get_pattern_helper_after_equals (rest)
+    )
+
+(*
+This function is used for val declarations when it is of
+the form "val h::t = [1,2];", or something similar. This function
+utilizes helper functions listed above to return something of the form
+(SOME pattern_not_including_equal_token, tokens_after_including_equals).
+*)
+fun get_pattern (tokens) =
+    (SOME (get_pattern_helper_upto_equals(tokens)), 
+     (get_pattern_helper_after_equals(tokens)))
+
+(*
+This function is supplied some Atype and returns true if
+it is Atype of ListType sometype, and false otherwise.
+*)
+fun is_of_list_type (sometype) = 
+    (case sometype
+      of ListType subtype => true
+       | _ => false
+    )
+
+(*
+This function is used for val declarations of the form
+"val h::t = [1,2];", or something similar. It is supplied some pattern
+(as tokens, of course), and the type. The function inserts the
+appropriate values into the symbol table, and returns the remaining
+tokens (usually there aren't any). For example, in the val declaration
+used above, "h" would be inserted as IntType, and "t" would be
+inserted into the symbol table with ListType IntType. 
+*)
+fun insert_list_into_symTab (tokens, the_type) = 
+    (case tokens
+      of (SOME (id_token id_name)::rest_tokens) =>
+	 (case rest_tokens
+	   of (SOME (list_coloncolon_token)::tokens_after_colons) =>
+	      (let
+		   val unit = insertEntry(Entry(Token(id_name),
+						the_type),
+					  symTab);
+	       in
+		   insert_list_into_symTab (tokens_after_colons, the_type)
+	       end)
+	    | _ => 
+	      (let
+		   val unit = insertEntry(Entry(Token(id_name),
+						(ListType (the_type))),
+					  symTab);
+	       in
+		   rest_tokens
+	       end)
+	 )
+       | _ => tokens
+    )
+
+(*
+This function is supplied some factor parse and returns
+the type.
+*)
+fun factor_type_find (Id_as_Factor(string, thetype)) = thetype
+  | factor_type_find (Number_as_Factor(string, thetype)) = thetype
+  | factor_type_find (String_as_Factor(string, thetype)) = thetype
+  | factor_type_find (Boolean_as_Factor(string, thetype)) = thetype
+  | factor_type_find (List_as_Factor(string, thetype)) = thetype
+  | factor_type_find (IfThenElse_as_Factor(thetype)) = thetype
+  | factor_type_find (Let_as_Factor(thetype)) = thetype
+  | factor_type_find (Fun_as_Factor(string, thetype)) = thetype
+  | factor_type_find (Parenthesized_Expr_as_Factor(string, thetype)) = thetype
+
+(*
+This function is supplied some term parse and returns the
+type. 
+*)
+fun term_type_find (Factor_as_Term(fact, thetype)) = thetype
+  | term_type_find (Multiply_Term(fact, trm, thetype)) = thetype
+  | term_type_find (Divide_Term(fact, trm, thetype)) = thetype
+  | term_type_find (Div_Term(fact, trm, thetype)) = thetype
+  | term_type_find (Mod_Term(fact, trm, thetype)) = thetype
+  | term_type_find (String_Term(fact, trm, thetype)) = thetype
+
+(*
+This function is supplied some expr parse and returns the
+type. 
+*)
+fun expr_type_find (Term_as_Expr(trm, thetype)) = thetype
+  | expr_type_find (Plus_Expr(trm, exp, thetype)) = thetype
+  | expr_type_find (Minus_Expr(trm, exp, thetype)) = thetype
+  | expr_type_find (String_Expr(trm, exp, thetype)) = thetype
+  | expr_type_find (List_ColonColon_Expr(trm, exp, thetype)) = thetype
+  | expr_type_find (List_AtSign_Expr(trm, exp, thetype)) = thetype
+
+(*
+This function is called from get_list and recursively
+builds the rest of the list. If the types do not match up along the
+way then it will be detected and propagated outward and reported as an
+Error. 
+*)
+fun get_rest_list (tokens) = 
+    (case tokens
+      of (SOME (list_start_token)::tokens_after_start) =>
+	 (case get_rest_list (tokens_after_start)
+	   of (SOME return_type, return_tokens) =>
+	      (case return_tokens
+		of (SOME list_end_token::rest) =>
+		   (SOME (ListType (return_type)), rest)
+		 | (SOME list_comma_token::rest) =>
+		   (let
+			val (SOME rest_type, rest_tokens) = get_rest_list (rest);
+		    in
+			if (rest_type = ListType return_type) then
+			    (SOME (ListType (return_type)), rest_tokens)
+			else
+			    (SOME (ListType (Error)), rest_tokens)
+		    end)
+		 | _ => 
+		   (SOME return_type, return_tokens)
+	      )
+	    | _ =>
+	      (SOME Error, tokens_after_start)
+	 )
+       | (SOME (num_token num_name)::tokens_after_num) => 
+	 (case tokens_after_num
+	   of (SOME (list_end_token)::tokens_after_list) =>
+	      (SOME (int_or_real_type(num_token num_name)), tokens_after_list)
+	    | (SOME (list_comma_token)::tokens_after_comma) =>
+	      (let 
+		   val this_type = int_or_real_type (num_token num_name);
+		   val (SOME rest_type, rest_tokens) = get_rest_list (tokens_after_comma);
+	       in
+		   if (this_type = rest_type) then
+		       (SOME this_type, rest_tokens)
+		   else
+		       (SOME Error, rest_tokens)
+	       end)
+	    | _ =>
+	      (SOME Error, tokens_after_num)
+	 )
+
+       | (SOME (bool_token)::tokens_after_bool) =>
+	 (case tokens_after_bool
+	   of (SOME (list_end_token)::tokens_after_list) =>
+	      (SOME BoolType, tokens_after_list)
+	    | (SOME (list_comma_token)::tokens_after_comma) =>
+	      (let 
+		   val this_type = BoolType;
+		   val (SOME rest_type, rest_tokens) = get_rest_list (tokens_after_comma);
+	       in
+		   if (this_type = rest_type) then
+		       (SOME this_type, rest_tokens)
+		   else
+		       (SOME Error, rest_tokens)
+	       end)
+	    | _ =>
+	      (SOME Error, tokens_after_bool)
+	 )
+
+       | (SOME (string_token string_name)::tokens_after_string) =>
+	 (case tokens_after_string
+	   of (SOME (list_end_token)::tokens_after_list) =>
+	      (SOME StringType, tokens_after_list)
+	    | (SOME (list_comma_token)::tokens_after_comma) =>
+	      (let 
+		   val this_type = StringType;
+		   val (SOME rest_type, rest_tokens) = get_rest_list (tokens_after_comma);
+	       in
+		   if (this_type = rest_type) then
+		       (SOME this_type, rest_tokens)
+		   else
+		       (SOME Error, rest_tokens)
+	       end)
+	    | _ =>
+	      (SOME Error, tokens_after_string)
+	 )
+
+       | (SOME (list_nil_token)::tokens_after_nil) =>
+	 (case tokens_after_nil
+	   of (SOME (list_end_token)::tokens_after_list) =>
+	      (SOME (ListType (NilType)), tokens_after_list)
+	    | (SOME (list_comma_token)::tokens_after_comma) =>
+	      (let 
+		   val this_type = ListType NilType;
+		   val (SOME rest_type, rest_tokens) = get_rest_list (tokens_after_comma);
+	       in
+		   if (this_type = rest_type) then
+		       (SOME this_type, rest_tokens)
+		   else
+		       (SOME Error, rest_tokens)
+	       end)
+	    | _ =>
+	      (SOME Error, tokens_after_nil)
+	 )
+
+       | (SOME (id_token id_name)::tokens_after_id) =>
+	 (case tokens_after_id
+	   of (SOME (list_end_token)::tokens_after_list) =>
+	      (SOME (lookup(Token(id_name), symTab)), tokens_after_list)
+	    | (SOME (list_comma_token)::tokens_after_comma) =>
+	      (let 
+		   val this_type = lookup(Token(id_name), symTab);
+		   val (SOME rest_type, rest_tokens) = get_rest_list (tokens_after_comma);
+	       in
+		   if (this_type = rest_type) then
+		       (SOME this_type, rest_tokens)
+		   else
+		       (SOME Error, rest_tokens)
+	       end)
+	    | _ =>
+	      (SOME Error, tokens_after_id)
+	 )
+
+       | _ => (SOME Error, tokens)
+    )
+
+(*
+This function recursively builds a list from the tokens
+supplied. The tokens of the list are checked as it is being build and
+the type is found. If the list has differing types then it detects
+this error and does not return a List_as_Factor.
+*)
+fun get_list (tokens) =
+    (case tokens
+      of (SOME list_start_token::rest) =>
+	 (case rest
+	   of (SOME list_end_token::tokens_after_end) =>
+	      (SOME (List_as_Factor ("[]", ListType NilType )), tokens_after_end)
+	    | _ =>
+	      (case get_rest_list (rest)
+		of (SOME return_type, return_tokens) =>
+		   if ((get_base_type (return_type)) = Error) then
+		       (NONE, [])
+		   else
+		       (SOME (List_as_Factor ("List", 
+					      ListType return_type
+			     )), 
+			return_tokens)
+		 | _ => 
+		   (NONE, rest)
+	      )
+	 )
+       | _ =>
+	 (NONE, tokens)	      
+    )
+
+(*
+This function is part of the group of functions declared
+to be dependent on each other: expr, term, factor, decl. It builds up
+a parse tree of the types and expressions that it knows about. It
+returns "none" for things it knows nothing about, aka Error type. 
+The following expressions are handled here:
+- Plus Expressions
+- Minus Expressions
+- String Concatenation Expressions
+- List :: Expressions
+- List @ Expressions
+*)
+fun expr (tokens) =
+    (case term (tokens)
+      of (SOME term_parse, tokens_after_term) =>
+         (case tokens_after_term
+			   
+	   of (SOME plus_token::tokens_after_plus) =>
+	      (case expr tokens_after_plus
+		of (SOME expr_parse, tokens_after_expr) =>
+		   (let
+			val term_type = term_type_find (term_parse);
+			val expr_type = expr_type_find (expr_parse);
+			val same_type = (term_type = expr_type) 
+					andalso ((expr_type = IntType) orelse (term_type = RealType));
+		    in
+			if same_type then
+			    (SOME (Plus_Expr(term_parse,
+					     expr_parse,
+					     expr_type
+				  )),
+			     tokens_after_expr)
+			else
+			    (NONE,tokens_after_expr)
+		    end)
+		 | (NONE,rem_tokens) => (NONE, rem_tokens))
+	      
+	    | (SOME minus_token::tokens_after_minus) =>
+	      (case expr tokens_after_minus
+		of (SOME expr_parse, tokens_after_expr) =>
+		   (let
+			val term_type = term_type_find (term_parse);
+			val expr_type = expr_type_find (expr_parse);
+			val same_type = (term_type = expr_type) 
+					andalso ((expr_type = IntType) orelse (term_type = RealType));
+		    in
+			if same_type then
+			    (SOME (Minus_Expr(term_parse,
+					     expr_parse,
+					     expr_type
+				  )),
+			     tokens_after_expr)
+			else
+			    (NONE,tokens_after_expr)
+		    end)
+		 | (NONE,rem_tokens) => (NONE, rem_tokens))
+	      
+	    | (SOME concat_token::tokens_after_concat) =>
+	      (case expr tokens_after_concat
+		of (SOME expr_parse, tokens_after_expr) =>
+		   (let
+			val term_type = term_type_find (term_parse);
+			val expr_type = expr_type_find (expr_parse);
+			val same_type = (term_type = expr_type) 
+					andalso ((expr_type = StringType));
+		    in
+			if same_type then
+			    (SOME (String_Expr(term_parse,
+					       expr_parse,
+					       expr_type
+				  )),
+			     tokens_after_expr)
+			else
+			    (NONE,tokens_after_expr)
+		    end)
+		 | (NONE,rem_tokens) => (NONE, rem_tokens))
+	      
+	    | (SOME list_coloncolon_token::tokens_after_colons) =>
+	      (case expr tokens_after_colons
+		of (SOME expr_parse, tokens_after_expr) =>
+		   (let
+			val term_type = term_type_find (term_parse);
+			val expr_type = expr_type_find (expr_parse);
+			val same_type = (ListType term_type = expr_type);
+		    in
+			if same_type then
+			    (SOME (List_ColonColon_Expr(term_parse,
+							expr_parse,
+							expr_type
+				  )),
+			     tokens_after_expr)
+			else
+			    (NONE,tokens_after_expr)
+		    end)
+		 | (NONE,rem_tokens) => (NONE, rem_tokens))
+	      
+	    | (SOME list_atsign_token::tokens_after_colons) =>
+	      (case expr tokens_after_colons
+		of (SOME expr_parse, tokens_after_expr) =>
+		   (let
+			val term_type = term_type_find (term_parse);
+			val expr_type = expr_type_find (expr_parse);
+			val same_type = (term_type = expr_type);
+		    in
+			if same_type then
+			    (SOME (List_AtSign_Expr(term_parse,
+						    expr_parse,
+						    expr_type
+				  )),
+			     tokens_after_expr)
+			else
+			    (NONE,tokens_after_expr)
+		    end)
+		 | (NONE,rem_tokens) => (NONE, rem_tokens))
+
+	    | _ => 	     
+	      (SOME (Term_as_Expr (term_parse, 
+				   term_type_find (term_parse)
+		    )), 
+	       tokens_after_term))
+
+       | (NONE, rem_tokens) => (NONE, rem_tokens))
+    
+(*
+This function is part of the group of functions declared
+to be dependent on each other: expr, term, factor, decl. It builds up
+a parse tree of the types and terms that it knows about. It returns
+"none" for things it knows nothing about, aka Error type.  
+The following "term" expressions are handled here:
+- Multiply Expressions
+- Divide Expressions
+- Div Expressions (using "div")
+- Mod Expressions
+*)
+and term (tokens) =
+    (case factor (tokens)
+      of (SOME factor_parse, tokens_after_factor) =>
+         (case tokens_after_factor
+	       
+           of (SOME times_token::tokens_after_times) =>
+              (case term tokens_after_times
+	       	of (SOME term_parse, tokens_after_term) =>
+		   (let 
+			val factor_type = factor_type_find (factor_parse);
+			val term_type = term_type_find (term_parse);
+			val same_type = (factor_type = term_type) 
+					andalso ((term_type = IntType) orelse (term_type = RealType));
+		    in
+			if same_type then
+			    (SOME (Multiply_Term(factor_parse, 
+						 term_parse, 
+						 term_type
+				  )), 
+			     tokens_after_term)
+			else
+			    (NONE,tokens_after_term)
+		    end)
+                 | (NONE,rem_tokens) => (NONE, rem_tokens))
+	      
+            | (SOME divide_token::tokens_after_divide) =>
+              (case term tokens_after_divide
+	       	of (SOME term_parse, tokens_after_term) =>
+		   (let 
+			val factor_type = factor_type_find (factor_parse);
+			val term_type = term_type_find (term_parse);
+			val same_type = (factor_type = term_type) 
+					andalso ((term_type = IntType) orelse (term_type = RealType));
+		    in
+			if same_type then
+			    (SOME (Divide_Term(factor_parse, 
+					       term_parse, 
+					       term_type
+				  )), 
+			     tokens_after_term)
+			else
+			    (NONE,tokens_after_term)
+		    end)
+                 | (NONE,rem_tokens) => (NONE, rem_tokens))
+     
+            | (SOME div_token::tokens_after_div) =>
+              (case term tokens_after_div
+	       	of (SOME term_parse, tokens_after_term) =>
+		   (let 
+			val factor_type = factor_type_find (factor_parse);
+			val term_type = term_type_find (term_parse);
+			val same_type = (factor_type = term_type) 
+					andalso ((term_type = IntType));
+		    in
+			if same_type then
+			    (SOME (Div_Term(factor_parse, 
+					    term_parse, 
+					    term_type
+				  )), 
+			     tokens_after_term)
+			else
+			    (NONE,tokens_after_term)
+		    end)
+                 | (NONE,rem_tokens) => (NONE, rem_tokens))
+            | (SOME mod_token::tokens_after_mod) =>
+              (case term tokens_after_mod
+	       	of (SOME term_parse, tokens_after_term) =>
+		   (let 
+			val factor_type = factor_type_find (factor_parse);
+			val term_type = term_type_find (term_parse);
+			val same_type = (factor_type = term_type) 
+					andalso ((term_type = IntType));
+		    in
+			if same_type then
+			    (SOME (Mod_Term(factor_parse, 
+					    term_parse, 
+					    term_type
+				  )), 
+			     tokens_after_term)
+			else
+			    (NONE,tokens_after_term)
+		    end)
+                 | (NONE,rem_tokens) => (NONE, rem_tokens))
+	      
+            | _ => 
+	      (SOME (Factor_as_Term (factor_parse, 
+				     factor_type_find (factor_parse)
+		    )), 
+	       tokens_after_factor)
+	 )
+
+       | (NONE, rem_tokens) => (NONE, rem_tokens))
+    
+(*
+This function is part of the group of functions declared
+to be dependent on each other: expr, term, factor, decl. It builds up
+a parse tree of the types of factors that it knows about. It returns
+"none" for things it knows nothing about, aka Error type.  
+The following "factor" expressions are handled here:
+- Parenthesized expressions
+- IDs as factors in expressions
+- Numbers as factors in expressions
+- Strings as factors in expressions 
+- Booleans as factors in expressions
+- Nil lists as factors in expressions
+- Regular lists as factors in expressions
+- If-then-else as factors in expressions
+- Let expressions
+- Fun declarations (not really...didn't complete this)
+*)
+and factor (SOME left_parenthesis::tokens) =
+    (case expr (tokens)
+      of (SOME expr_parse, tokens_after_expr) =>
+       	 (case tokens_after_expr
+	   of SOME right_parenthesis::tokens_after_rparen =>
+              (SOME (Parenthesized_Expr_as_Factor (expr_parse, 
+						   expr_type_find (expr_parse)
+		    )),
+               tokens_after_rparen)
+	      
+            | _ => (NONE, tokens_after_expr))
+       | (NONE, rem_tokens) => (NONE, rem_tokens))
+    
+  | factor (SOME (id_token id_name)::tokens) = 
+    (SOME (Id_as_Factor (id_name, 
+			 lookup(Token(id_name), symTab)
+	  )), 
+     tokens)
+
+  | factor (SOME (num_token num_name)::tokens) =
+    (SOME (Number_as_Factor (num_name, 
+			     int_or_real_type(num_token num_name)
+	  )), 
+     tokens)
+    
+  | factor (SOME (string_token string_name)::tokens) =
+    (SOME (String_as_Factor (string_name, 
+			     StringType
+	  )), 
+     tokens)
+
+  | factor (SOME (bool_token)::tokens) =
+    (SOME (Boolean_as_Factor ("bool", 
+			      BoolType
+	  )), 
+     tokens)
+    
+  | factor (SOME (list_nil_token)::tokens) =
+    (SOME (List_as_Factor ("[]", (ListType NilType) )), tokens)
+
+  | factor (SOME list_start_token::tokens) = 
+    (get_list (SOME list_start_token::tokens))
+
+  | factor (SOME if_token::tokens_after_if) =
+    (case expr (tokens_after_if)
+      of (SOME expr_parse, rest) => 
+	 (case rest
+	   of (SOME (equal_token)::tokens_after) =>
+	      (case expr (tokens_after)
+		of (SOME expr_parse2, rest2) =>
+		   if (expr_type_find(expr_parse) <> expr_type_find(expr_parse2)) then
+		       (NONE, rest2)
+		   else
+		       (case rest2
+			 of (SOME (then_token)::tokens_after_then) =>
+			    (case expr (tokens_after_then)
+			      of (SOME return_parse, rest3) =>
+				 (case rest3 
+				   of (SOME (else_token)::tokens_after_else) =>
+				      (case expr (tokens_after_else)
+					of (SOME return_parse2, rest4) =>
+					   if (expr_type_find(return_parse) <>
+					       expr_type_find(return_parse2)) then
+					       (NONE, [])
+					   else
+					       (SOME (IfThenElse_as_Factor (expr_type_find(return_parse))), 
+						rest4)
+					 | _ => (NONE, [])
+				      )
+				    | _ => (NONE, [])
+				 )
+			       | _ => (NONE, [])
+			    )
+			  | _ => (NONE, [])
+		       )
+		 | _ => (NONE, [])
+	      )
+	    | (SOME (boolean_expr_token)::tokens_after) =>
+	      (case expr (tokens_after)
+		of (SOME expr_parse2, rest2) =>
+		   if (expr_type_find(expr_parse) <> expr_type_find(expr_parse2)) then
+		       (NONE, [])
+		   else
+		       (case rest2
+			 of (SOME (then_token)::tokens_after_then) =>
+			    (case expr (tokens_after_then)
+			      of (SOME return_parse, rest3) =>
+				 (case rest3 
+				   of (SOME (else_token)::tokens_after_else) =>
+				      (case expr (tokens_after_else)
+					of (SOME return_parse2, rest4) =>
+					   if (expr_type_find(return_parse) <>
+					       expr_type_find(return_parse2)) then
+					       (NONE, [])
+					   else
+					       (SOME (IfThenElse_as_Factor (expr_type_find(return_parse))), 
+						rest4)
+					 | _ => (NONE, [])
+				      )
+				    | _ => (NONE, [])
+				 )
+			       | _ => (NONE, [])
+			    )
+			  | _ => (NONE, [])
+		       )
+		 | _ => (NONE, [])
+	      )
+	    | _ => (NONE, [])	 
+	 )
+       | _ => (NONE, [])
+    )
+
+  | factor (SOME let_token::tokens_after_let) = 
+    (let
+	 val unit = newBoundary(Boundary("let"), symTab);
+     in
+	 (case consume_val_declarations (tokens_after_let)
+	   of (SOME in_token::tokens_after_in) =>
+	      (case expr (tokens_after_in)
+		of (SOME expr_parse, rest) =>
+		   (case rest
+		     of (SOME end_token::tokens_after_end) =>
+			if (expr_type_find(expr_parse) <> Error) then
+			    (let
+				 val unit = exitScope("let", symTab);
+			     in
+				 (SOME (Let_as_Factor (expr_type_find(expr_parse))), tokens_after_end)
+			     end)
+			else
+			    (NONE, [])
+		      | _ => (NONE, [])
+		   )
+		 | _ => (NONE, [])
+	      )
+	    | _ =>
+	      (NONE, [])
+	 )
+     end)
+
+  | factor (SOME fun_token::tokens_after_fun) = 
+    (let 
+	 val newscope = newBoundary(Boundary("fun"), symTab);
+     in
+	 (case tokens_after_fun
+	   of (SOME (id_token fun_name)::tokens_after_fun_name) =>
+	      (case tokens_after_fun_name
+		of (SOME (id_token param_name)::tokens_after_param) =>
+		   (case tokens_after_param
+		     of (SOME (equal_token)::tokens_after_equal) =>
+			(* doesn't handle ex: fun f x = x + 1, due to lookup issues *)
+			(case expr (tokens_after_equal)
+			  of (SOME expr_parse, rest) =>
+			     (let
+				  val the_type = expr_type_find(expr_parse);
+				  val exitscope = exitScope("fun", symTab);
+				  val unit = insertEntry(Entry(Token(fun_name),
+							       the_type),
+							 symTab);
+			      in
+				  if (the_type <> Error) then
+				      (SOME (Fun_as_Factor(fun_name, the_type)), rest)
+				  else
+				      (NONE, [])
+			      end)
+			   | _ => (SOME (Fun_as_Factor(fun_name, Error)), tokens_after_equal)
+			)
+		      | _ => (NONE, [])
+		   )
+		 | (SOME (left_parenthesis)::tokens_after_left_paren) =>
+		   (case tokens_after_left_paren
+		     of (SOME (id_token param_name)::tokens_after_param) =>
+			(case tokens_after_param
+			  of (SOME (right_parenthesis)::tokens_after_right_paren) =>
+			     (case tokens_after_right_paren
+			       of (SOME (equal_token)::tokens_after_equal) =>
+				  (* doesn't handle ex: fun f x = x + 1, due to lookup issues *)
+				  (case expr (tokens_after_equal)
+				    of (SOME expr_parse, rest) =>
+				       (let
+					    val the_type = expr_type_find(expr_parse);
+					    val exitscope = exitScope("fun", symTab);
+					    val unit = insertEntry(Entry(Token(fun_name),
+									 the_type),
+								   symTab);
+					in
+					    if (the_type <> Error) then
+						(SOME (Fun_as_Factor(fun_name, the_type)), rest)
+					    else
+						(NONE, [])
+					end)
+				     | _ => (SOME (Fun_as_Factor(fun_name, Error)), tokens_after_equal)
+				  )
+				| _ => (NONE, [])
+			     )
+			   | _ => (NONE, [])
+			)
+		      | _ => (NONE, [])
+		   )
+		 | _ => (NONE, [])
+	      )
+	    | _ => (NONE, [])
+	 )
+     end)
+
+  | factor (tokens) = (NONE, tokens)
+	
+(*
+This function is part of the group of functions declared
+to be dependent on each other: expr, term, factor, decl. It builds up
+a parse tree of the types of declarations that it knows about. It
+returns "none" for things it knows nothing about, aka Error type.  
+The following declarations are handled here:
+- Val declarations
+*)	      
+and decl (tokens) = 
+    (case tokens
+      of (SOME val_token::tokens_after_val) =>
+	 (case tokens_after_val
+	   of (SOME (id_token id_name)::tokens_after_id) => 
+	      (case tokens_after_id
+		of (SOME (equal_token)::tokens_after_equal) =>
+		   (case expr (tokens_after_equal)
+		     of (SOME expr_parse, rest) =>
+			(case rest
+			  of (SOME (semicolon_token)::tokens_after_semicolon) =>
+			     (let
+				  val the_type = expr_type_find(expr_parse);
+				  val unit = insertEntry(Entry(Token(id_name),
+							       the_type),
+							 symTab);
+			      in
+				  (SOME (Val_Declaration (id_name, 
+							  the_type
+					)), 
+				   tokens_after_semicolon)
+			      end)
+			   | (SOME (list_atsign_token)::tokens_after_atsign) =>
+			     (case expr (tokens_after_atsign)
+			       of (SOME expr_parse2, rest2) =>
+				  (case rest2
+				    of (SOME (semicolon_token)::tokens_after_semicolon) =>
+				       if (expr_type_find(expr_parse) = expr_type_find(expr_parse2)) then
+					   (let
+						val type1 = expr_type_find(expr_parse);
+						val type2 = expr_type_find(expr_parse2);
+						val unit = insertEntry(Entry(Token(id_name),
+									     type1),
+								       symTab);
+					    in
+						(SOME (Val_Declaration (id_name, get_base_type(type1))), tokens_after_semicolon)
+					    end)
+				       else
+					   (NONE, [])
+				     | _ => (NONE, [])
+				  )
+				| _ => (NONE, [])
+			     )
+			   | _ => (NONE, [])
+			)
+		      | _ => (NONE, [])
+		   )
+		 | (SOME (list_coloncolon_token)::tokens_after_colons) =>
+		   (case get_pattern (tokens_after_val)
+		     of (SOME list_parse, tokens_after_list) =>
+			(case tokens_after_list
+			  of (SOME (equal_token)::tokens_after_equal) =>
+			     (case expr (tokens_after_equal)
+			       of (SOME expr_parse, rest) =>
+				  (case rest
+				    of (SOME (semicolon_token)::tokens_after_semicolon) =>
+				       if (is_of_list_type(expr_type_find(expr_parse))) then
+					   (let
+						val the_type = expr_type_find(expr_parse);
+						val unit = insert_list_into_symTab(tokens_after_val, get_sub_type(the_type));
+					    in
+						(SOME (Val_Declaration ("Patterned",
+									the_type
+						      )),
+						 tokens_after_semicolon)
+					    end)
+				       else
+					   (NONE, [])
+				     | _ => (NONE, [])
+				  )
+				| _ => (NONE, [])
+			     )
+			   | _ => (NONE, [])
+			)
+		      | _ => (NONE, [])
+		   )
+		 | _ => (NONE, [])
+	      )
+	    | _ => (NONE, [])
+	 )
+       | _ => (NONE, [])
+    )
+
+(*
+This function is part of the group of functions declared
+to be dependent on each other: expr, term, factor, decl. This is a
+helper function to decl. It will be given some tokens (usually after a
+let_token and "consume" all of the val declarations it finds,
+inserting them into the symbol table by calling decl.
+*)
+and consume_val_declarations (tokens) = 
+    (case tokens
+      of (SOME val_token::rest_tokens) =>
+	 (case decl (tokens)
+	   of (SOME first_part, rem_tokens) =>
+	      consume_val_declarations(rem_tokens)
+	    | _ => tokens
+	 )
+       | _ => tokens
+    )
+
+(*
+Top level type checking function. When it receives some
+tokens it hands off to the appropriate functions to be parsed.
+*)
+fun typecheck (tokens) =
+    (case tokens
+      of (SOME val_token::rest) =>
+	 (case decl (tokens)
+	   of (SOME decl_parse, decl_tokens) =>
+	      (SOME (Decl(decl_parse)))
+	    | _ =>
+	      (NONE)
+    )
+
+       | _ =>
+	 (case expr (tokens)
+	   of (SOME expr_parse, expr_tokens) =>
+	      (SOME (Expr(expr_parse)))
+	    | _ =>
+	      (NONE)
+	 )
+    )
+
+(*
+Given a string gets the rest of a real number. This is a
+helper function.
+*)
+fun getRestNumReal (current_char::chars) = 
+    if Char.isDigit (current_char) then
+       	(case getRestNumReal (chars)
+          of (SOME tail_num, rem_chars) =>
+             (SOME (Char.toString current_char ^ tail_num), rem_chars)
+           | (NONE, rem_chars) =>
+             (SOME (Char.toString current_char), rem_chars))
+    else (NONE, current_char::chars)
+  |  getRestNumReal ([]) = (NONE, [])
+			   
+(*
+Given a string gets the rest of an integer or real
+number. This is a helper function.
+*)
+and getRestNum (current_char::chars) =
+    if Char.isDigit (current_char) then
+       	(case getRestNum (chars)
+          of (SOME tail_num, rem_chars) =>
+             (SOME (Char.toString current_char ^ tail_num), rem_chars)
+           | (NONE, rem_chars) =>
+             (SOME (Char.toString current_char), rem_chars))
+    else if (current_char = #".") then
+	(case getRestNumReal (chars)
+	  of (SOME return_val, rem_chars) => 
+	     (SOME (Char.toString #"." ^ return_val), rem_chars)
+	   | (NONE, rem_chars) =>
+	     (SOME (Char.toString current_char), rem_chars))
+    else (NONE, current_char::chars)
+  |  getRestNum ([]) = (NONE, [])
+		       
+(* 
+Given a string gets an integer or real number. 
+*)
+and getNum (current_char::chars) =
+    (case getRestNum (chars)
+      of (SOME tail_num, rem_chars) =>
+	 (SOME (Char.toString current_char ^ tail_num),  rem_chars)
+       | (NONE, rem_chars) =>
+	 (SOME (Char.toString current_char), rem_chars))
+  |  getNum ([]) = (NONE, [])
+		   
+(*
+Identifies '::' as an id_token, temporarily, for helping
+with list concatenation expressions.
+*)
+fun getRestListColon (current_char::chars) = 
+    if (current_char = #":") then (SOME (Char.toString current_char), chars)
+    else (NONE, current_char::chars)
+  | getRestListColon ([]) = (NONE, [])
+			    
+(*
+This function gets the rest of the characters passed to
+it and forms the remaining portion of an id_token.
+*)
+and getRestId (current_char::chars) =
+    if Char.isAlphaNum (current_char) then
+       	(case getRestId (chars)
+          of (SOME tail_id, rem_chars) =>
+             (SOME (Char.toString current_char ^ tail_id), rem_chars)
+           | (NONE, rem_chars) =>
+             (SOME (Char.toString current_char), rem_chars))
+    else (NONE, current_char::chars)
+  | getRestId ([]) = (NONE, [])
+		     
+(*
+This function forms an id_token out of the characters
+passed to it.
+*)
+and getId (current_char::chars) =
+    if Char.isAlpha (current_char) then
+	(case getRestId (chars)
+          of (SOME rest_id, rem_chars) =>
+             (SOME (Char.toString current_char ^ rest_id), rem_chars)
+           | (NONE, rem_chars) =>
+             (SOME (Char.toString current_char), rem_chars))
+    else if (current_char = #":") then
+	(case getRestListColon (chars)
+	  of (SOME return_val, rem_chars) =>
+	     (SOME (Char.toString #":" ^ return_val), rem_chars)
+	   | (NONE, rem_chars) =>
+	     (SOME (Char.toString current_char), rem_chars))
+    else (NONE, current_char::chars)
+  |  getId ([]) = (NONE, [])
+		  
+(*
+Forms a string token from the passed character list.
+*)
+fun getString (current_char::chars) =
+    if (current_char <> #"\"") then
+	(case getString (chars)
+          of (SOME rest_string, rem_chars) =>
+             (SOME (Char.toString current_char ^ rest_string), rem_chars)
+           | (NONE, rem_chars) =>
+             (SOME (Char.toString current_char), rem_chars))
+    else (NONE, current_char::chars)
+  |  getString ([]) = (NONE, [])
+
+(*
+When passed some characters and a known character, then
+it checks if the first character of the unknown character list is the
+same as the known character. 
+*)
+fun is_same_char (unknown::chars, known) = 
+    if (unknown = known) then true
+    else false
+  | is_same_char ([], value) = false
+  
+(*
+Chops off the first character from the passed character
+list. 
+*)
+fun my_tl (current_char::chars) = chars
+  | my_tl ([]) = []
+	
+(*
+Forms tokens out of the exploded character string that is
+passed to it.
+*)	 
+fun tokens (current_char::chars) =
+    (case current_char
+      of #"(" => SOME left_parenthesis::tokens (chars)
+       | #")" => SOME right_parenthesis::tokens (chars) 
+       | #"+" => SOME plus_token::tokens (chars)
+       | #"-" => SOME minus_token::tokens (chars)
+       | #"*" => SOME times_token::tokens (chars)
+       | #"/" => SOME divide_token::tokens (chars)
+       | #"^" => SOME concat_token::tokens (chars)
+       | #"@" => SOME list_atsign_token::tokens (chars)
+       | #":" => (* delete single colons *)
+	 if (is_same_char (chars, #":")) then
+	     SOME list_coloncolon_token::tokens (my_tl chars)
+	 else
+	     tokens (chars)
+       | #"=" => SOME equal_token::tokens (chars)
+       | #"<" => 
+	 if (is_same_char (chars, #">") orelse is_same_char (chars, #"=")) then
+	     SOME boolean_expr_token::tokens (my_tl chars)
+	 else
+	     SOME boolean_expr_token::tokens (chars)
+       | #">" => 
+	 if (is_same_char (chars, #"=")) then
+	     SOME boolean_expr_token::tokens (my_tl chars)
+	 else
+	     SOME boolean_expr_token::tokens (chars)
+       | #";" => SOME semicolon_token::tokens (chars)
+       | #" " => tokens (chars)  (* delete spaces *)
+       | #"\t" => tokens (chars) (* delete tabs *)
+       | #"\n" => tokens (chars) (* delete newlines *)
+       | #"\"" =>
+	 (case getString (chars)
+	   of (SOME string_name, rem_chars) =>
+	      SOME (string_token string_name)::tokens (my_tl rem_chars)
+	    | (NONE, rem_chars) => NONE::tokens (rem_chars)
+	 )
+       | #"[" => SOME list_start_token::tokens (chars)
+       | #"]" => SOME list_end_token::tokens (chars)
+       | #"," => SOME list_comma_token::tokens (chars)
+       | _ =>
+	 if Char.isDigit (current_char) then
+	     let
+		 val (SOME num, rest) = getNum(current_char::chars)
+	     in
+		 SOME (num_token num)::tokens (rest)
+	     end
+	 else
+	     (case getId (current_char::chars)
+	       of (SOME id_name, rem_chars) =>
+		  (case id_name
+		    of "div" =>
+		       SOME (div_token)::tokens (rem_chars)
+		     | "mod" =>
+		       SOME (mod_token)::tokens (rem_chars)
+		     | "nil" =>
+		       SOME (list_nil_token)::tokens (rem_chars)
+		     | "true" =>
+		       SOME (bool_token)::tokens (rem_chars)
+		     | "false" =>
+		       SOME (bool_token)::tokens (rem_chars) 
+		     | "val" =>
+		       SOME (val_token)::tokens (rem_chars)
+		     | "if" =>
+		       SOME (if_token)::tokens (rem_chars)
+		     | "then" =>
+		       SOME (then_token)::tokens (rem_chars)
+		     | "else" =>
+		       SOME (else_token)::tokens (rem_chars)
+		     | "let" =>
+		       SOME (let_token)::tokens (rem_chars)
+		     | "in" =>
+		       SOME (in_token)::tokens (rem_chars)
+		     | "end" =>
+		       SOME (end_token)::tokens (rem_chars)
+		     | "fun" =>
+		       SOME (fun_token)::tokens (rem_chars)
+		     | _ => SOME (id_token id_name)::tokens (rem_chars)
+		  )
+		| (NONE, rem_chars) => NONE::tokens (rem_chars)))
+  | tokens ([]) = []

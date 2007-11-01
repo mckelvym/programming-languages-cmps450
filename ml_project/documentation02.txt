@@ -1,0 +1,247 @@
+II. Design Documentation
+
+II.1 System Architecture Description
+
+The program is contained in two separate SML files that are loaded
+into the SML interpreter. The first file, which also much be loaded
+first into the interpreter, is "symtab1.sml". This file contains code
+for generating a symbol table. The symbol table is used by the second
+file to store entries and their types, to make sections of code with
+certain scope, and for determining the types of entries when they are
+encountered later in some statement. The second file, which is the
+central type checking program, is called "arith.sml". This file does
+the parsing of the input and builds a parse tree out of tokens. When
+an identifier is encountered, its type and name are inserted into the
+symbol table to be looked up at a later time during the parse tree
+building. 
+
+II.2.1 Information about the functions in "symtab1.sml"
+
+Name: fun newBoundary ( RibBoundary as Boundary(s), symTab ) =
+Description: This allows the programmer to create a new scope in the
+symbol table with "local variables" for let expressions and for fun
+declarations. 
+
+Name: fun insertEntry ( Item, symTab )
+Description: This allows the programmer to insert an entry into the
+symbol table by giving an id to be looked up later and also a type. 
+
+Name: fun deleteEntry ( symTab )
+Description: This removes the last added entry from the symbol table. 
+
+Name: fun updateEntry ( Item, symTab )
+Description: This deletes the last entry from the symbol table and
+adds a new entry into the symbol table at the same location. This is
+to be used principally while inside some local scope. 
+
+Name: fun exitScope ( s, symTab )
+Description: This allows the programmer to exit out of some local
+scope such as in a let expression of a fun declaration. 
+
+Name: fun lookup ( anId, symTab )
+Description: This allows the programmer to lookup an entry in the
+symbol table by giving an id, and the type associated with the entry
+is returned from the symbol table.
+
+II.2.2 Information about the functions in "arith.sml"
+
+Name: fun int_or_real_type_helper (current_char::chars)
+Description: Looks for the first occurrence of a period and returns
+true immediately (assumes it is real type), if it does not find a
+period then it keeps searching until it reaches the end of the list
+and then returns false.
+
+Name: fun int_or_real_type (num_token(num_string))
+Description: This is supplied a num_token and searches the string to
+determine if it is RealType or IntType, returns either of these or
+Error if a num_token was not supplied.
+
+Name: fun get_base_type (sometype)
+Description: This is supplied some Atype and if it is some form of
+ListType subtype, then it recursively looks for the base type of
+subtype, returning the result. If Atype is not of ListType subtype,
+then the type that is supplied is returned.
+
+Name: fun get_sub_type (sometype)
+Description: This is supplied some Atype and if it is some form of
+ListType subtype, then subtype is returned, otherwise Error is
+returned. 
+
+Name: fun get_pattern_helper_upto_equals (tokens)
+Description: This is used for val declarations when it is of the form
+"val h::t = [1,2];" or something similar. This function is supplied
+some tokens (usually tokens_after_val) and returns all of the tokens
+it finds as long as they are of some id_token or
+list_coloncolon_token. Usually these are all of the tokens before the
+equal_token.
+
+Name: fun get_pattern_helper_after_equals (tokens)
+Description: This is used for val declarations and returns all of the
+tokens from the equal_token onward. The type of val declarations when
+this is used is when it is of the form "val h::t = [1,2];" and the
+argument is usually tokens_after_val. It will look for an equal token
+and when it find it will return the equal_token and all tokens after
+it. 
+
+Name: fun get_pattern (tokens)
+Description: This function is used for val declarations when it is of
+the form "val h::t = [1,2];", or something similar. This function
+utilizes helper functions listed above to return something of the form
+(SOME pattern_not_including_equal_token, tokens_after_including_equals).
+
+Name: fun is_of_list_type (sometype)
+Description: This function is supplied some Atype and returns true if
+it is Atype of ListType sometype, and false otherwise.
+
+Name: fun insert_list_into_symTab (tokens, the_type)
+Description: This function is used for val declarations of the form
+"val h::t = [1,2];", or something similar. It is supplied some pattern
+(as tokens, of course), and the type. The function inserts the
+appropriate values into the symbol table, and returns the remaining
+tokens (usually there aren't any). For example, in the val declaration
+used above, "h" would be inserted as IntType, and "t" would be
+inserted into the symbol table with ListType IntType. 
+
+Name: fun factor_type_find (Id_as_Factor(string, thetype))
+Description: This function is supplied some factor parse and returns
+the type.
+
+Name: fun term_type_find (Factor_as_Term(fact, thetype))
+Description: This function is supplied some term parse and returns the
+type. 
+
+Name: fun expr_type_find (Term_as_Expr(trm, thetype))
+Description: This function is supplied some expr parse and returns the
+type. 
+
+Name: fun get_rest_list (tokens)
+Description: This function is called from get_list and recursively
+builds the rest of the list. If the types do not match up along the
+way then it will be detected and propagated outward and reported as an
+Error. 
+
+Name: fun get_list (tokens)
+Description: This function recursively builds a list from the tokens
+supplied. The tokens of the list are checked as it is being build and
+the type is found. If the list has differing types then it detects
+this error and does not return a List_as_Factor.
+
+Name: fun expr (tokens)
+Description: This function is part of the group of functions declared
+to be dependent on each other: expr, term, factor, decl. It builds up
+a parse tree of the types and expressions that it knows about. It
+returns "none" for things it knows nothing about, aka Error type. 
+The following expressions are handled here:
+- Plus Expressions
+- Minus Expressions
+- String Concatenation Expressions
+- List :: Expressions
+- List @ Expressions
+
+Name: fun term (tokens)
+Description: This function is part of the group of functions declared
+to be dependent on each other: expr, term, factor, decl. It builds up
+a parse tree of the types and terms that it knows about. It returns
+"none" for things it knows nothing about, aka Error type.  
+The following "term" expressions are handled here:
+- Multiply Expressions
+- Divide Expressions
+- Div Expressions (using "div")
+- Mod Expressions
+
+Name: fun factor (tokens)
+Description: This function is part of the group of functions declared
+to be dependent on each other: expr, term, factor, decl. It builds up
+a parse tree of the types of factors that it knows about. It returns
+"none" for things it knows nothing about, aka Error type.  
+The following "factor" expressions are handled here:
+- Parenthesized expressions
+- IDs as factors in expressions
+- Numbers as factors in expressions
+- Strings as factors in expressions 
+- Booleans as factors in expressions
+- Nil lists as factors in expressions
+- Regular lists as factors in expressions
+- If-then-else as factors in expressions
+- Let expressions
+- Fun declarations (not really...didn't complete this)
+
+Name: fun decl (tokens)
+Description: This function is part of the group of functions declared
+to be dependent on each other: expr, term, factor, decl. It builds up
+a parse tree of the types of declarations that it knows about. It
+returns "none" for things it knows nothing about, aka Error type.  
+The following declarations are handled here:
+- Val declarations
+
+Name: fun consume_val_declarations (tokens)
+Description: This function is part of the group of functions declared
+to be dependent on each other: expr, term, factor, decl. This is a
+helper function to decl. It will be given some tokens (usually after a
+let_token and "consume" all of the val declarations it finds,
+inserting them into the symbol table by calling decl.
+
+Name: fun typecheck (tokens)
+Description: Top level type checking function. When it receives some
+tokens it hands off to the appropriate functions to be parsed.
+
+Name: fun getRestNumReal (current_char::chars)
+Description: Given a string gets the rest of a real number. This is a
+helper function.
+
+Name: fun getRestNum (current_char::chars)
+Description: Given a string gets the rest of an integer or real
+number. This is a helper function.
+
+Name: fun getNum (current_char::chars)
+Description: Given a string gets an integer or real number. 
+
+Name: fun getRestListColon (current_char::chars)
+Description: Identifies '::' as an id_token, temporarily, for helping
+with list concatenation expressions.
+
+Name: fun getRestId (current_char::chars)
+Description: This function gets the rest of the characters passed to
+it and forms the remaining portion of an id_token.
+
+Name: fun getId (current_char::chars)
+Description: This function forms an id_token out of the characters
+passed to it.
+
+Name: fun getString (current_char::chars)
+Description: Forms a string token from the passed character list.
+
+Name: fun is_same_char (unknown::chars, known)
+Description: When passed some characters and a known character, then
+it checks if the first character of the unknown character list is the
+same as the known character. 
+
+Name: fun my_tl (current_char::chars)
+Description: Chops off the first character from the passed character
+list. 
+
+Name: fun tokens (current_char::chars)
+Description: Forms tokens out of the exploded character string that is
+passed to it. 
+
+II.3 Information about the algorithm 
+Typically the program first accepts input through the tokens function
+as a character list. This tokens function first converts all of the
+input into usable tokens that the program can more easily
+handle. White space is removed and not handled. Once this function is
+done parsing the input it returns all of its tokens, which are then
+passed on to the typecheck function. This function checks to see if
+the first token is a val token. If it is a val token, then it hands
+control over to the decl function that knows how to parse val
+declarations. Anytime that a val declaration is successfully parsed,
+the corresponding identifier is put into the symbol table to be looked
+up later.  If the first token is not a val token, then it hands
+control over to the expr function, which knows how to do everything
+else. Ideally, fun declarations should probably implemented in decl,
+but they are semi-implemented in factor. The expr function takes the
+tokens that it is given and tries to make sense of them. It tries to
+construct factors out of identifiers, number, strings, boolean, let
+expressions, if-then-else expressions, and so on. Then the function
+term tries to see if the parses that it has match anything it knows
+how to do, and the process keep cycling until either all the input is
+consumed, or an error is found.

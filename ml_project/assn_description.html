@@ -1,0 +1,62 @@
+<!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html><head>
+
+
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.7 [en] (WinNT; U) [Netscape]"><title>CMPS450 ML Assignment</title></head><body background="ML_project_files/pmarble.jpg">
+
+<hr>
+<center>
+<h1>
+CMPS450 Programming Languages</h1></center>
+
+<hr>
+<center>
+<h2>
+Assignment 2<p>Fall 2007</p></h2></center>
+
+<center>
+<h2>
+<b>Assigned:</b> Thursday, September 27, 2007<br>
+<b>Submission and Folder Due: </b>Tuesday, November 1, 2007 before class.<br>
+<p>
+</p></h2></center>
+<p></p><p><b>Problem:</b></p><p></p><p>
+
+For this assignment you are to implement, using the Standard ML language,
+the <b>Hindley-Milner</b> type checking algorithm, as presented in class
+and in section 6.8 of the text, for a subset of ML.
+</p><p>
+Your solution should read in a sequence of ML statements and either output
+that the statements are type correct <b>or</b> report the first type
+error encountered if they are not.
+</p><p>
+Your solution should be able to correctly type check any ML statement composed
+of:
+</p><ul>
+<li>Mathematical expressions involving the binary operators +, -, *, /, div, and mod</li>
+<li>String expressions involving the binary operator ^</li>
+<li>List expressions involving the binary operators @ and ::</li>
+<li>val declarations for integer, real, boolean, string, list, and function variables.</li>
+<li>fun declarations where the parameters are all of the types listed above and
+whose return values are one of the above.</li>
+<li>let expressions with the same restrictions as those for fun declarations.</li>
+<li>if-then-else expressions which return one of the above types.</li>
+</ul>
+
+<p></p><p>
+You are to use the symbol table from <a href="http://web.cacs.louisiana.edu/%7Emgr/450/ML/symtab1.sml">symtab1.sml</a>.
+Also, <a href="http://web.cacs.louisiana.edu/%7Emgr/450/ML/arith.sml">arith.sml</a> contains code
+for properly parsing mathematical expressions which you must use as a foundation
+for your solution.
+</p><p>
+Here are some sample input functions you can use to read from a file,
+<a href="http://web.cacs.louisiana.edu/%7Emgr/450/ML/input.sml">input.sml</a> 
+</p><p><b>NOTE TO HARLEQUIN USERS:</b> Select "MLWorks2.0 + Basis"
+after installation and remove the first 3 lines of code from arith.sml
+before loading it into the listener.
+</p><p></p><p>
+You may assume that white spaces ( space character, newline, tab ) separate all keywords.
+Use the assignment name <b>milner</b> when submitting your implementation from your UCS class account.
+
+</p></body></html>

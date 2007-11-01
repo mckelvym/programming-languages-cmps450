@@ -1,0 +1,164 @@
+For function declarations, are we assuming these will not use the |
+character? Will val declarations make use of the : to specify type?
+Will any lists be constructed using [ and ]? Will any strings be using
+character literals? 
+
+I'm going through the process of formulating the grammar for this
+currently and I wanted to know does the grammar we use for the parser
+have to produce all and only the expressions we want to account for or
+can the grammar represent a superset and use type inferencing to
+reduce it? 
+
+Can we assume that the "/" operator is for integer division as well as
+float division b/c SML uses "div" for integer division? 
+
+How are we to handle boolean expressions in our if-then-else
+statements? 
+
+Is it acceptable to edit the symtab1.sml file? For instance, to handle
+an unknown type? 
+Well, you can. And, I don't understand the need. 
+
+Second question:
+For the expressions that are to be type checked, are we to assume that
+the values are declared prior to the entry of the expression? 
+For example, can we assume:
+val a =1;
+val b =2;
+(a + 3) - b;
+
+for the third line [(a + 3) - b] to be valid, do a and b have to be
+declared before hand (as I did in the example above)? 
+
+Reading your answer to Crawford's question again, I think you may have
+already addressed my question... 
+"...
+You may assume that the input in lexically correct. The only thing you
+should worry about is type incorrectness. So, you won't have to worry
+about something like: 
+
+let
+val a = 1 +
+val b = c - d;
+in
+a + b
+end;
+..."
+Am I correct in assuming that this answers my question?
+
+yes. And, you can still put stuff in the symbol table for testing
+purposes even if you don't have the val working. Simply do the
+following: 
+
+use "symtab1.sml";
+use "arith.sml"';
+insertEntry( Entry( Token( "a"), IntType), symTab);
+
+expr( tokens( explode(" a + 3")));
+
+Gavin,
+I just realized that I misread your post about editing
+symtab1.sml...when you get to inferring the type of a fun parameter
+you might want an update function to update the type of the parameter
+once it is found. 
+
+I apologize in advance for my dumb question. My program is starting to
+get really really long in terms of text lines. One thing that would
+make it much smaller and readable is if I could figure out how to use
+"or". So perhaps someone can tell me, is there any way to do something
+like : 
+case somestuff
+of <something1> or <something2> => doStuff
+
+If not inside a case, maybe inside of an if statement? 
+I've looked at several tutorials and couldn't find anything. anyone
+know? 
+
+Tim,
+You started your code sample with "of" so I am assuming that you are
+talking about inside a case statement. The answer then is no as the
+"or" is simply "|" for another case. 
+
+Now, having said that, there is an "orelse" operator that you can use
+in an if: 
+
+if this orelse that then
+expr
+else
+expr1
+
+There is also an "andalso" operator.
+
+Ok, another question, slightly less dumb. Is it possible to make it to
+where a function can call another function that hasn't been written
+yet? 
+
+like this :
+fun dostuff1 (somevar) = dostuff2 somevar;
+fun dostuff2 (somevars) = domorestuff;
+
+Of course, in this example you could just put dostuff2 first, but
+pretend that wasn't an option. If not, is there any other way to
+handle a "function1 calls function2 which calls function1" type of
+thing? 
+
+I think this is just the "and" keyword used in the code he gives us so
+that the functions are declared at the same time. 
+
+Are functions expected to infer types the same way that the SML
+compiler typically does, ie. 
+fun square x = x*x;
+
+is assumed to be int->int since no types will be specified in the
+input? Or should we allow for both a real or an int? 
+
+On a related note, how complex can we expect function bodies to be? 
+
+Ryan,
+No. You will be able to infer the types of the parameters in the
+function bodies. Now, if you want to include functionality to handle
+the example you gave that is fine. And, we won't test for that. 
+
+Function bodies are simple expressions so they can have anything in
+them that is derived from a single application of the <expr>
+production in the grammar. 
+
+Is it correct to assume that we should only account for value
+declarations like: 
+val a = 2;
+and not
+val a =2; val b = 3;
+
+If a type is determined to be error type from a val declaration,
+should it be inserted into the symbol table as ErrorType?  
+
+The way symTab1.sml uses semi colons is scary.
+
+Can we expect to see these guys in our input. If so, where will they
+be? 
+
+Gavin,
+There may be a sequence of val declarations in lets. So, your code
+should be able to handle that. 
+
+Nothing should be placed in the symbol table in the event of a type
+error. Your program should terminate at that point. 
+
+symTab1 uses a lot of semicolons because it is not written in the
+functional style and makes use of sequencing. You can expect
+semicolons as separators for val declarations in let statements. Since
+you will not be dealing with sequences you will not have to deal with
+them anywhere else. 
+
+fun hisFun x = x + 1
+fun herFun [[yes]] = y * y
+
+Will function paramters sometimes have parenthesis, and then sometimes
+not have them? 
+
+Either way you do it is fine. If you only recognize parameters with
+parenthesis that is how we will test it, and if you don't recognize
+them we will test it that way. 
+
+No, this implies that you will let us know in the documentation. 
+

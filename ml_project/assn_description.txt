@@ -1,0 +1,44 @@
+Assignment 2
+Fall 2007
+Assigned: Thursday, September 27, 2007
+Submission and Folder Due: Tuesday, November 1, 2007 before class.
+
+Problem:
+For this assignment you are to implement, using the Standard ML
+language, the Hindley-Milner type checking algorithm, as presented in
+class and in section 6.8 of the text, for a subset of ML.
+
+Your solution should read in a sequence of ML statements and either
+output that the statements are type correct or report the first type
+error encountered if they are not.
+
+Your solution should be able to correctly type check any ML statement
+composed of:
+
+    * Mathematical expressions involving the binary operators +, -, *,
+	/, div, and mod
+    * String expressions involving the binary operator ^
+    * List expressions involving the binary operators @ and ::
+    * val declarations for integer, real, boolean, string, list, and
+	function variables.
+    * fun declarations where the parameters are all of the types
+	listed above and whose return values are one of the above.
+    * let expressions with the same restrictions as those for fun
+	declarations.
+    * if-then-else expressions which return one of the above types.
+
+You are to use the symbol table from symtab1.sml. Also, arith.sml
+contains code for properly parsing mathematical expressions which you
+must use as a foundation for your solution.
+
+Here are some sample input functions you can use to read from a file,
+input.sml
+
+NOTE TO HARLEQUIN USERS: Select "MLWorks2.0 + Basis" after
+installation and remove the first 3 lines of code from arith.sml
+before loading it into the listener.
+
+You may assume that white spaces ( space character, newline, tab )
+separate all keywords. Use the assignment name milner when submitting
+your implementation from your UCS class account. 
+

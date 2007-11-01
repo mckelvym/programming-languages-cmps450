@@ -1,0 +1,776 @@
+IV. Verification and Validation Documentation
+
+IV.1 Test Plan
+Give input to the program that is valid. Verify that the input is
+valid. Give input to the program that is invalid. Verify that the
+program does not return a parse tree. Start from basic input and work
+up to more difficult input. Attempt to test every aspect of what the
+assignment calls for. 
+
+IV.2 Test Results
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("1")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Term_as_Expr
+          (Factor_as_Term (Number_as_Factor ("1",IntType),IntType),IntType)))
+  : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("1.0")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Term_as_Expr
+          (Factor_as_Term (Number_as_Factor ("1.0",RealType),RealType),
+           RealType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("true")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Term_as_Expr
+          (Factor_as_Term (Boolean_as_Factor ("bool",BoolType),BoolType),
+           BoolType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("false")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Term_as_Expr
+          (Factor_as_Term (Boolean_as_Factor ("bool",BoolType),BoolType),
+           BoolType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("\"hey\"")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Term_as_Expr
+          (Factor_as_Term (String_as_Factor ("hey",StringType),StringType),
+           StringType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("nil")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Term_as_Expr
+          (Factor_as_Term
+             (List_as_Factor ("[]",ListType NilType),ListType NilType),
+           ListType NilType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("[]")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Term_as_Expr
+          (Factor_as_Term
+             (List_as_Factor ("[]",ListType NilType),ListType NilType),
+           ListType NilType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("1::1")));
+
+Result:
+val it = NONE : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("1::[1]")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (List_ColonColon_Expr
+          (Factor_as_Term (Number_as_Factor ("1",IntType),IntType),
+           Term_as_Expr
+             (Factor_as_Term
+                (List_as_Factor ("List",ListType IntType),ListType IntType),
+              ListType IntType),ListType IntType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("1.0::[1]")));
+
+Result:
+val it = NONE : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("true::[true]")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (List_ColonColon_Expr
+          (Factor_as_Term (Boolean_as_Factor ("bool",BoolType),BoolType),
+           Term_as_Expr
+             (Factor_as_Term
+                (List_as_Factor ("List",ListType BoolType),ListType BoolType),
+              ListType BoolType),ListType BoolType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("3 + 4")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Plus_Expr
+          (Factor_as_Term (Number_as_Factor ("3",IntType),IntType),
+           Term_as_Expr
+             (Factor_as_Term (Number_as_Factor ("4",IntType),IntType),IntType),
+           IntType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("5 * 2")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Term_as_Expr
+          (Multiply_Term
+             (Number_as_Factor ("5",IntType),
+              Factor_as_Term (Number_as_Factor ("2",IntType),IntType),IntType),
+           IntType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("1 + 2 + 3 + 4 + (5)")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Plus_Expr
+          (Factor_as_Term (Number_as_Factor ("1",IntType),IntType),
+           Plus_Expr
+             (Factor_as_Term (Number_as_Factor ("2",IntType),IntType),
+              Plus_Expr
+                (Factor_as_Term (Number_as_Factor ("3",IntType),IntType),
+                 Plus_Expr
+                   (Factor_as_Term (Number_as_Factor ("4",IntType),IntType),
+                    Term_as_Expr
+                      (Factor_as_Term
+                         (Parenthesized_Expr_as_Factor
+                            (Term_as_Expr
+                               (Factor_as_Term
+                                  (Number_as_Factor ("5",IntType),IntType),
+                                IntType),IntType),IntType),IntType),IntType),
+                 IntType),IntType),IntType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("\"ab-c\" ^ \"bab+y\"")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (String_Expr
+          (Factor_as_Term (String_as_Factor ("ab-c",StringType),StringType),
+           Term_as_Expr
+             (Factor_as_Term
+                (String_as_Factor ("bab+y",StringType),StringType),StringType),
+           StringType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("\"ab-c\" ^ \"bab+y\" ^ 6")));
+
+Result:
+val it = NONE : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("3 + \"ab-c\" ^ \"bab+y\" ^ 6")));
+
+Result:
+val it = NONE : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("\"ab-c\" - \"bab+y\"")));
+
+Result:
+val it = NONE : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("\"[3]@[4]\"")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Term_as_Expr
+          (Factor_as_Term (String_as_Factor ("[3]@[4]",StringType),StringType),
+           StringType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("\"part1\" ^ \"part2\"")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (String_Expr
+          (Factor_as_Term (String_as_Factor ("part1",StringType),StringType),
+           Term_as_Expr
+             (Factor_as_Term
+                (String_as_Factor ("part2",StringType),StringType),StringType),
+           StringType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("[2]@[4]")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (List_AtSign_Expr
+          (Factor_as_Term
+             (List_as_Factor ("List",ListType IntType),ListType IntType),
+           Term_as_Expr
+             (Factor_as_Term
+                (List_as_Factor ("List",ListType IntType),ListType IntType),
+              ListType IntType),ListType IntType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("[[true]]@[[false]]")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (List_AtSign_Expr
+          (Factor_as_Term
+             (List_as_Factor ("List",ListType (ListType BoolType)),
+              ListType (ListType BoolType)),
+           Term_as_Expr
+             (Factor_as_Term
+                (List_as_Factor ("List",ListType (ListType BoolType)),
+                 ListType (ListType BoolType)),ListType (ListType BoolType)),
+           ListType (ListType BoolType)))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("[[[\"hey\"]]]@[[[\"false\",\"not false\"]]]")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (List_AtSign_Expr
+          (Factor_as_Term
+             (List_as_Factor
+                ("List",ListType (ListType (ListType StringType))),
+              ListType (ListType (ListType StringType))),
+           Term_as_Expr
+             (Factor_as_Term
+                (List_as_Factor
+                   ("List",ListType (ListType (ListType StringType))),
+                 ListType (ListType (ListType StringType))),
+              ListType (ListType (ListType StringType))),
+           ListType (ListType (ListType StringType))))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("[[5]]::[[[6]]]")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (List_ColonColon_Expr
+          (Factor_as_Term
+             (List_as_Factor ("List",ListType (ListType IntType)),
+              ListType (ListType IntType)),
+           Term_as_Expr
+             (Factor_as_Term
+                (List_as_Factor
+                   ("List",ListType (ListType (ListType IntType))),
+                 ListType (ListType (ListType IntType))),
+              ListType (ListType (ListType IntType))),
+           ListType (ListType (ListType IntType))))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("[[[[5]]]]@[[[[6]]]]")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (List_AtSign_Expr
+          (Factor_as_Term
+             (List_as_Factor
+                ("List",ListType (ListType (ListType (ListType IntType)))),
+              ListType (ListType (ListType (ListType IntType)))),
+           Term_as_Expr
+             (Factor_as_Term
+                (List_as_Factor
+                   ("List",ListType (ListType (ListType (ListType IntType)))),
+                 ListType (ListType (ListType (ListType IntType)))),
+              ListType (ListType (ListType (ListType IntType)))),
+           ListType (ListType (ListType (ListType IntType)))))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("[[[[5]]]]@[[[[[6]]]]]")));
+
+Result:
+val it = NONE : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("[3.0]::[[4.0],[3.2]]")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (List_ColonColon_Expr
+          (Factor_as_Term
+             (List_as_Factor ("List",ListType RealType),ListType RealType),
+           Term_as_Expr
+             (Factor_as_Term
+                (List_as_Factor ("List",ListType (ListType RealType)),
+                 ListType (ListType RealType)),ListType (ListType RealType)),
+           ListType (ListType RealType)))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("1::[3]")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (List_ColonColon_Expr
+          (Factor_as_Term (Number_as_Factor ("1",IntType),IntType),
+           Term_as_Expr
+             (Factor_as_Term
+                (List_as_Factor ("List",ListType IntType),ListType IntType),
+              ListType IntType),ListType IntType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("2::[j]")));
+
+Result:
+val it = NONE : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("j::[1]")));
+
+Result:
+val it = NONE : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("[[nil]]")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Term_as_Expr
+          (Factor_as_Term
+             (List_as_Factor ("List",ListType (ListType (ListType NilType))),
+              ListType (ListType (ListType NilType))),
+           ListType (ListType (ListType NilType))))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("[[[nil]],[[nil]]]")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Term_as_Expr
+          (Factor_as_Term
+             (List_as_Factor
+                ("List",ListType (ListType (ListType (ListType NilType)))),
+              ListType (ListType (ListType (ListType NilType)))),
+           ListType (ListType (ListType (ListType NilType)))))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("val a = 5;")));
+
+Result:
+val it = SOME (Decl (Val_Declaration ("a",IntType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("val a = true;")));
+
+Result:
+val it = SOME (Decl (Val_Declaration ("a",BoolType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("val a = nil;")));
+
+Result:
+val it = SOME (Decl (Val_Declaration ("a",ListType NilType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("val a = [];")));
+
+Result:
+val it = SOME (Decl (Val_Declaration ("a",ListType NilType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("val a = [[[nil]],[[nil]]];")));
+
+Result:
+val it =
+  SOME
+    (Decl
+       (Val_Declaration
+          ("a",ListType (ListType (ListType (ListType NilType))))))
+  : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("val a::b = [5];")));
+
+Result:
+val it = SOME (Decl (Val_Declaration ("Patterned",ListType IntType)))
+  : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("val a::b::c = [5,4,3,2,1];")));
+
+Result:
+val it = SOME (Decl (Val_Declaration ("Patterned",ListType IntType)))
+  : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("val a::b::c = [true,false,true,false];")));
+
+Result:
+val it = SOME (Decl (Val_Declaration ("Patterned",ListType BoolType)))
+  : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("val a::b::c = [true,false,true,1];")));
+
+Result:
+val it = NONE : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("val a::b::c = if 5 <> 5 then true else false;")));
+
+Result:
+val it = NONE : Both option
+
+Is this expected? No, the fact that the if statement is not
+parenthesized should not have an effect on the parse.
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("val t = (if 1 = 1 then 5.0 else 3.0);")));
+
+Result:
+val it = SOME (Decl (Val_Declaration ("t",RealType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("if 5 <> 5 then true else false")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Term_as_Expr
+          (Factor_as_Term (IfThenElse_as_Factor BoolType,BoolType),BoolType)))
+  : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("if 5 > 3 then \"hey\" else false")));
+
+Result:
+val it = NONE : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("if 5 >= 3 then \"hey\" else \"false\"")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Term_as_Expr
+          (Factor_as_Term (IfThenElse_as_Factor StringType,StringType),
+           StringType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("if (5 = 3) then nil else nil")));
+
+Result:
+val it = NONE : Both option
+
+Is this expected? No, the boolean test should have been done better,
+using expr to check for parenthesized expressions.
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("let val b = if 5 = 3 then 3 else 1; in true end")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Term_as_Expr
+          (Factor_as_Term (Let_as_Factor BoolType,BoolType),BoolType)))
+  : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("let val b = if 5 = 3 then 3 else 1; in 5 end + 8 + 1")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Plus_Expr
+          (Factor_as_Term (Let_as_Factor IntType,IntType),
+           Plus_Expr
+             (Factor_as_Term (Number_as_Factor ("8",IntType),IntType),
+              Term_as_Expr
+                (Factor_as_Term (Number_as_Factor ("1",IntType),IntType),
+                 IntType),IntType),IntType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("let val b = if 5 = 3 then 3 else 1; in 5 end + 8 + 1")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Plus_Expr
+          (Factor_as_Term (Let_as_Factor IntType,IntType),
+           Plus_Expr
+             (Factor_as_Term (Number_as_Factor ("8",IntType),IntType),
+              Term_as_Expr
+                (Factor_as_Term (Number_as_Factor ("1",IntType),IntType),
+                 IntType),IntType),IntType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("let val b = if 5 = 3 then 3 else 1; in 5+b end + 8 + 1")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Plus_Expr
+          (Factor_as_Term (Let_as_Factor IntType,IntType),
+           Plus_Expr
+             (Factor_as_Term (Number_as_Factor ("8",IntType),IntType),
+              Term_as_Expr
+                (Factor_as_Term (Number_as_Factor ("1",IntType),IntType),
+                 IntType),IntType),IntType))) : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("let val b = if 5 = 3 then 3 else 1; in 5+b end + 8 + b")));
+
+Result:
+val it = NONE : Both option
+
+Is this valid?
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("fun fx (x) = x + 1")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Term_as_Expr (Factor_as_Term (Fun_as_Factor ("fx",Error),Error),Error)))
+  : Both option
+
+Is this expected? Yes, because fun declarations were not fully
+implemented.
+
+--------------------------------------------------------------------------------
+Input:
+typecheck(tokens(explode("fun fx x = x + 1")));
+
+Result:
+val it =
+  SOME
+    (Expr
+       (Term_as_Expr (Factor_as_Term (Fun_as_Factor ("fx",Error),Error),Error)))
+  : Both option
+
+Is this expected? Yes, because fun declarations were not fully
+implemented.
+
+--------------------------------------------------------------------------------
+
+IV.3 Operating Directions 
+As stated in section I.1, the interpreter from http://www.smlnj.org/
+(versions 110.66 released 11/13/07 and 110.67 released 09/06/07) were
+compiled from source and used for this project. For testing, a line of
+input was copied into a file, say "inputfile.txt" like the following:
+typecheck(tokens(explode("if 5 >= 3 then \"hey\" else \"false\"")));
+and the file was redirected as standard input into the interpreter. 
+
+Example run:
+$ sml arith.sml < inputfile.txt
+
+IV.4 Cautions
+The program does not correctly type check fun declarations. 
+
+

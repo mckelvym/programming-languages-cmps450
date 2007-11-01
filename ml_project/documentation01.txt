@@ -1,0 +1,139 @@
+Class			CMPS450
+Section			001
+Problem			ML Type Checking Project
+Name			McKelvy, James Markus
+CLID			jmm0468
+Due Date		10:15am December 6, 2007 (Thursday)
+
+
+I. Requirements Documentation
+
+I.1 Description of the Problem
+Name: ML Type Checking (Hindley-Milner)
+
+Problem Statement: A program is to be written in the Standard ML
+language, that will implement the Hindley-Milner type checking
+algorithm for a subset of ML.
+
+Problem Specification: Using the algorithm presented in class and in
+section 6.8 of the text, write a program in Standard ML that should be
+able to correctly type check a subset of the ML language. The solution
+should use the Hindley-Milner type checking algorithm. The
+implementation of this algorithm should be able to correctly type
+check the following ML statements, composed of: 
+
+- Mathematical expressions using the binary operators +, -, *, /, div,
+  and mod.
+
+- String expressions using the binary operator ^.
+ 
+- List expressions using the binary operators @ and ::.
+
+- Val declarations for the following types: integer, real, boolean,
+  string, list, and function variables. 
+
+- Fun declarations where the parameters are of the following types:
+  integer, real, boolean, string, list, and function variables. The
+  return values are of these same types. 
+
+- Let expressions that have the same restrictions as fun
+  declarations. 
+
+- If-then-else expressions that return one of the above mentioned
+  types. 
+
+A symbol table has been already implemented and should be used in this
+assignment. The implementation for this assignment will be on top of
+the pre-existing code that for properly parses mathematical
+expressions. This pre-existing code will be extended to handle the
+cases mentioned above. It will be assumed that white space will
+separate all keywords. The program should build a parse tree of the
+input or report if there was an error encountered.
+
+The interpreter used is Standard ML of New Jersey (versions 110.66
+released 11/13/07 and 110.67 released 09/06/07 were both used) and can
+be found at: http://www.smlnj.org/
+
+I.2 Input Information
+The input to the program may come as standard input redirected into
+the interpreter or text typed in the interpreter itself. The former is
+typically used, where a file containing instructions is redirected to
+the interpreter. The program expects the input to be a character list
+(exploded string) that is then tokenized by the "tokens" function and
+then passed on to the top-level type checking function called
+"typecheck". The input string or character list should contain
+syntactically correct ML code mentioned in the "Problem Specification"
+section, as this program's goal is only to type check the code. An
+example of the input is this:
+
+typecheck(tokens(explode("let val a::b::c = [[[3],[4]]]; in \"Somestring\" end")));
+
+I.3 Output Information
+Given that the program receives type correct input, then it will build
+a parse tree of statements provided. If the input provided is not type
+correct then the program will simply report a parse tree of
+nothing. For example, if the program were given a list to parse
+"3::4::5::6::7::[8]" then the parse tree that would be build by the
+program would look like this:
+
+- val it =
+  SOME
+    (Expr
+       (List_ColonColon_Expr
+          (Factor_as_Term (Number_as_Factor ("3",IntType),IntType),
+           List_ColonColon_Expr
+             (Factor_as_Term (Number_as_Factor ("4",IntType),IntType),
+              List_ColonColon_Expr
+                (Factor_as_Term (Number_as_Factor ("5",IntType),IntType),
+                 List_ColonColon_Expr
+                   (Factor_as_Term (Number_as_Factor ("6",IntType),IntType),
+                    List_ColonColon_Expr
+                      (Factor_as_Term (Number_as_Factor ("7",IntType),IntType),
+                       Term_as_Expr
+                         (Factor_as_Term
+                            (List_as_Factor ("List",ListType IntType),
+                             ListType IntType),ListType IntType),
+                       ListType IntType),ListType IntType),ListType
+		       IntType),
+              ListType IntType),ListType IntType))) : Both option
+
+We see that at the top level the program parse the statement given as
+some expression comprised of some number of lower elements. Like
+leaves on a tree, as we co lower and lower we see that each part of
+the expression is parsed as some "List_ColonColon_Expr" which is an
+expression composed of an element prepended to a list "1::[]". For
+each of these prepend expressions it has as operators some factor and
+some other prepend expression. At the lowest levels is a parse of some
+"List" as a factor, and that list as a term in an expression. For each
+of these levels, the associated types with the leaves are shown as the
+tree is being built.
+
+Now suppose that we gave the following string for the program to
+parse: "3::4::5::6::7.0::[8]". This is almost the same as the previous
+string supplied with the important difference that this list is not
+type correct due to the real number in the list of integers. In this
+case the parse tree that would normally be output is not, and instead
+the following happens:
+
+- val it = NONE : Both option
+
+This means that the program detected an error while trying to parse
+the statement it was supplied, and as a result, none of the statement
+is type correct. 
+
+I.4 User Interface Information
+With this program there are no prompts. It expects input as described
+in "I.2 Input Information" and at that point goes on to attempt
+parsing the input given and building a parse tree. The model is:
+supply input statement to the correct functions, wait for the output
+to be generated, at which point execution of the program halts or the
+program waits to be supplied more input. The typical way to run the
+program is the following:
+
+$ sml arith.sml < inputfile.txt
+
+Where inputfile.txt contains various statements like:
+typecheck(tokens(explode("3::4::5::6::7.0::[8]")));
+typecheck(tokens(explode("val a = [3];")));
+etc...
+
