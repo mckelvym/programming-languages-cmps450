@@ -1,0 +1,10 @@
+comment works;
+procedure Absmax(a)size:(n,m)Result:(y)Subscripts:(i,k);
+comment the absolute greatest element of the matrix a, of size n by m
+is transferred to y, and the subscripts of this element to i and k;
+array a; integer n,m,i,k; real y;
+begin integer p,q;
+y:=0;
+for p:= 1 step 1 until n do for q:=1 step 1 until m do
+if abs(a[p,q])>y then b:=1
+end

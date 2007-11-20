@@ -1,0 +1,87 @@
+Class			CMPS450
+Section			001
+Problem			Snobol Semester Project
+Name			McKelvy, James Markus
+CLID			jmm0468
+Due Date		10:00pm November 19, 2007
+
+
+I. Requirements Documentation
+
+I.1 Description of the Problem
+Name: Algol Recognizer
+
+Problem Statement: A program is to be written in the Snobol4 language
+that will recognize a syntactically correct Algol 60 program supplied
+as input. The program will output a "Yes" or a "No" based upon
+its conclusion. This is the only output.
+
+Problem Specification: Based upon the "Report on the Algorithmic
+Language Algol 60", an implementation using the Snobol4 programming
+language must be written to recognize a syntactically correct Algol 60
+program. In general, the implementation will be based off the BNFs
+specified in the report. The implementation deviates from the Algol 60
+specification in a few parts:
+
+- The division symbol (horizontal bar with a dot above and below) is
+  to be completely ignored in the implementation.
+- The following symbols "<=", ">=, "\=" will be used in place of
+  their corresponding symbols in the <relational operator>
+  section. These symbols are '>' on top of '_', '<' on top of '_', and
+  the '=' sign with a slash through it.
+- The keywords and symbols "and", "or", "not", "->", and "==" will be
+  used in place of the traditional symbols for and, or, not, subset,
+  and implication, respectively.
+- All occurrences of <exponent part> and the subscripted '10' will be
+  ignored.
+- The carat "^" will be used in place of the up arrow in all
+  productions. 
+- The assumption will be made that there are no nested strings, all
+  strings begin and end with a single quote, containing no other
+  single quotes in the string.
+- The assumption will be made that at the topmost level the program is
+  a procedure declaration made of various other elements.
+
+The reasons for this deviation from the report is for at least two
+reasons. In some cases there are symbols that are used that no longer
+appear on standard keyboards. The other reason is for simplification
+of the assignment. Another important aspect of this program is that it
+checks only for the syntax of the supplied Algol 60 program to be
+correct. The semantics involved are ignored and beyond the scope of
+this project. 
+
+The following interpreter for Snobol4 was used:
+ftp://ftp.ultimate.com/snobol/snobol4-1.1.tar.gz 
+
+I.2 Input Information
+The program "prefers" valid Algol 60 code that is syntactically
+correct. What this means is that the best results are seen with this
+type of input. Algol 60 code that is not syntactically correct is also
+allowed. Blank input is also allowed. These things being said, the
+input to the program can, in fact, be pretty much anything. The
+limitations of this however are that the program will tend to get
+stuck in a recursive loop for the input and will not terminate. Again,
+the aim of this program is to have supplied it Algol 60 code and
+receive a verification that the code is syntactically correct.
+
+I.3 Output Information
+The program has three output states: "Yes", "No", and no output. If
+the input supplied to the program is valid Algol 60 code that has
+correct syntax, the program will respond with the output of "Yes"
+indicating that the code is syntactically correct. If the input
+supplied to the program is valid Algol 60 code that has a few errors
+in syntax, the program will respond with the output of "No" indicating
+that the code is not syntactically correct. It is also possible that
+the program will not respond with output in a timely manner and this
+could be for several reasons. Certain code sequences supplied as the
+input could cause this program to get stuck in an infinite loop and
+never terminate. Typically an upper limit to assume that this is the
+case is about five minutes.
+
+I.4 User Interface Information
+There are no prompts. The program simply takes input from the standard
+input stream and begins checking for correct Algol 60 syntax. The
+program neither requires nor accepts any further action from the
+user. The easiest way to run this program is to do the following:
+$snobol4 -b -S 10m -P 10m -d 10m algol_recognizer.sno < algol_code.a60
+

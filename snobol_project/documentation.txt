@@ -1,0 +1,2469 @@
+Class			CMPS450
+Section			001
+Problem			Snobol Semester Project
+Name			McKelvy, James Markus
+CLID			jmm0468
+Due Date		10:00pm November 19, 2007
+
+
+I. Requirements Documentation
+
+I.1 Description of the Problem
+Name: Algol Recognizer
+
+Problem Statement: A program is to be written in the Snobol4 language
+that will recognize a syntactically correct Algol 60 program supplied
+as input. The program will output a "Yes" or a "No" based upon
+its conclusion. This is the only output.
+
+Problem Specification: Based upon the "Report on the Algorithmic
+Language Algol 60", an implementation using the Snobol4 programming
+language must be written to recognize a syntactically correct Algol 60
+program. In general, the implementation will be based off the BNFs
+specified in the report. The implementation deviates from the Algol 60
+specification in a few parts:
+
+- The division symbol (horizontal bar with a dot above and below) is
+  to be completely ignored in the implementation.
+- The following symbols "<=", ">=, "\=" will be used in place of
+  their corresponding symbols in the <relational operator>
+  section. These symbols are '>' on top of '_', '<' on top of '_', and
+  the '=' sign with a slash through it.
+- The keywords and symbols "and", "or", "not", "->", and "==" will be
+  used in place of the traditional symbols for and, or, not, subset,
+  and implication, respectively.
+- All occurrences of <exponent part> and the subscripted '10' will be
+  ignored.
+- The carat "^" will be used in place of the up arrow in all
+  productions. 
+- The assumption will be made that there are no nested strings, all
+  strings begin and end with a single quote, containing no other
+  single quotes in the string.
+- The assumption will be made that at the topmost level the program is
+  a procedure declaration made of various other elements.
+
+The reasons for this deviation from the report is for at least two
+reasons. In some cases there are symbols that are used that no longer
+appear on standard keyboards. The other reason is for simplification
+of the assignment. Another important aspect of this program is that it
+checks only for the syntax of the supplied Algol 60 program to be
+correct. The semantics involved are ignored and beyond the scope of
+this project. 
+
+The following interpreter for Snobol4 was used:
+ftp://ftp.ultimate.com/snobol/snobol4-1.1.tar.gz 
+
+I.2 Input Information
+The program "prefers" valid Algol 60 code that is syntactically
+correct. What this means is that the best results are seen with this
+type of input. Algol 60 code that is not syntactically correct is also
+allowed. Blank input is also allowed. These things being said, the
+input to the program can, in fact, be pretty much anything. The
+limitations of this however are that the program will tend to get
+stuck in a recursive loop for the input and will not terminate. Again,
+the aim of this program is to have supplied it Algol 60 code and
+receive a verification that the code is syntactically correct.
+
+I.3 Output Information
+The program has three output states: "Yes", "No", and no output. If
+the input supplied to the program is valid Algol 60 code that has
+correct syntax, the program will respond with the output of "Yes"
+indicating that the code is syntactically correct. If the input
+supplied to the program is valid Algol 60 code that has a few errors
+in syntax, the program will respond with the output of "No" indicating
+that the code is not syntactically correct. It is also possible that
+the program will not respond with output in a timely manner and this
+could be for several reasons. Certain code sequences supplied as the
+input could cause this program to get stuck in an infinite loop and
+never terminate. Typically an upper limit to assume that this is the
+case is about five minutes.
+
+I.4 User Interface Information
+There are no prompts. The program simply takes input from the standard
+input stream and begins checking for correct Algol 60 syntax. The
+program neither requires nor accepts any further action from the
+user. The easiest way to run this program is to do the following:
+$snobol4 -b -S 10m -P 10m -d 10m algol_recognizer.sno < algol_code.a60
+
+II. Design Documentation
+
+II.1 System Architecture Description
+There is only one file containing all of the code for program. The
+program relies heavily on the use of Snobol's pattern matching
+ability. The Algol 60 BNFs are mimicked through the use of these
+patterns. The '*' operator is used to delay the evaluation of the
+patterns so that the stack does not overflow. In addition, the use of
+labels are used to generate loops. Based upon the success or failure
+of a pattern matching statement, the program may jump to another
+segment of code. 
+
+II.2 Information about the patterns
+Most of the patterns used in the assignment are taken directly from
+the Algol 60 report's BNFs and modified so that they work with the
+Snobol pattern type. Recursion is heavily used in the definition of
+the BNFs, but it is left recursive and often the BNFs state the base
+case before the recursive case. Because of this the patterns were
+made to used right recursion instead of left recursion and to state
+the base case as the last choice in a pattern. Some of the patterns
+were condensed as needed, and a few were expanded. This was done for
+two main reasons. To reduce redundancy and to increase readability of
+the program. Additionally, there are a few patterns do not come from
+the Algol 60 BNFs. The following examples show the reorganizing of the
+BNFs to better suit the pattern type:
+
+--------------------------------------------------------------------------------
+Comparison of assignment statements
+
+From Algol 60 report:
+
+<left part> ::= <variable> :=
+<left part list> ::= <left part>|<left part list><left part>
+<assignment statement> ::= <left part list><arithmetic expression>|
+		<left part list><boolean expression>
+
+From Snobol sourcecode:
+
+LEFT_PART_LIST = *VARIABLE ":=" *LEFT_PART_LIST | *VARIABLE ":="
+ASSIGNMENT_STATEMENT = *LEFT_PART_LIST (*ARITHMETIC_EXPRESSION | *BOOLEAN_EXPRESSION)
+
+In this example the <left part> was incorporated into the
+LEFT_PART_LIST. The LEFT_PART_LIST was rewritten to check for a
+variable paired with the ":=" operator paired with more of these
+statements. In the BNF, it is written with the base case first or
+choose a left recursive definition. My implementation uses a right
+recursive definition or choose the base case. 
+
+--------------------------------------------------------------------------------
+Comparison of variable statements
+
+From Algol 60 report:
+
+<variable identifier> ::= <identifier>
+<simple variable> ::= <variable identifier>
+<subscript expression> ::= <arithmetic expression>
+<subscript list> ::= <subscript expression>|<subscript list>,
+		<subscript expression>
+<array identifier> ::= <identifier>
+<subscripted variable> ::= <array identifier>[<subscript list>]
+<variable> ::= <simple variable>|<subscripted variable>
+
+From Snobol sourcecode:
+SUBSCRIPTS = (*UNSIGNED_NUMBER | *VARIABLE | *ARITHMETIC_EXPRESSION)
+		ARBNO("," *SUBSCRIPTS) 
+SUBSCRIPTED_VARIABLE = *IDENTIFIER "[" *SUBSCRIPTS "]"
+VARIABLE = *IDENTIFIER "[" *SUBSCRIPTS "]" | *IDENTIFIER
+
+The first thing to notice is the number of BNF statements compared to
+the number of pattern statements. The patterns are simplified versions
+of the BNFs and are also easier to read. The first, second, and last
+statements from the BNFs are a verbose way of saying that a variable
+can be an identifier, this is how it is implemented in the pattern as
+a base case. The third through sixth BNF statements are simply saying
+that a variable can also be an identifier with some comma separated
+list of numbers, variables, or arithmetic expressions enclosed in
+square brackets, and this is how it is implemented in the pattern
+statements. Through this simplification, most of the left recursion
+seen in the BNFs goes away. The simplification also makes the code
+easier to read. The only extra step needed is to make the pattern for
+a variable first look for a subscripted variable and then look for the
+base case of an identifier. 
+
+--------------------------------------------------------------------------------
+Example of added patterns
+
+NUMBER_OR_IDENTIFIER = *NUMBER | *IDENTIFIER
+SIMPLE_SUBSCRIPTS = NUMBER_OR_IDENTIFIER ARBNO("," *SIMPLE_SUBSCRIPTS)
+
+These patterns are defined and used for a simplification step in the
+program. They do not directly come from any of the Algol 60 BNFs but
+are just a subset used in easily identifying a certain type of
+variable that can be simplified.
+
+--------------------------------------------------------------------------------
+
+II.3 Information about the algorithm
+The first step in forming a solution to the problem is to read the
+Algol 60 report and become familiar with what actual code would look
+like. The next step would be to map the BNFs shown in the report to
+Snobol patterns. Starting with simple cases, it would be evident that
+a direct translation from BNF to pattern would yield bad results. The
+next step is to rewrite the patterns so that they are no longer
+looking for the base case first and no longer using left
+recursion. This step strikes are the heart of the algorithm and takes
+the most time to nail down. Once this step is complete, many examples
+of code can be tested against the patterns used. It is usually best to
+start small and check each type of pattern against valid input and see
+if the program validates it. The next step is to analyze each of the
+patterns to see how they can be simplified and not rely as heavily on
+recursion. The next thing to do is to simplify the input coming
+in. Since Algol 60 doesn't care about whitespace, all of it should be
+removed using the Snobol program. Next, comments can be removed, since
+they are not necessary for syntax checking. After that, a series of
+other simplifications can be made so that when the code is checked it
+will exit faster. Some examples of what I've done to simplify the code
+before checking it involve: 
+
+- Shortcut escaping - output "no" if a certain pattern that is not
+  valid and known is seen.
+- Convert uppercase characters to lowercase characters
+- Making multidigit numbers into a single digit .
+- Making subscripted variables into simple variables.
+- Shortening comma separated elements down to just two elements,
+  provided the elements are numbers or identifiers.
+- Shortening function designators separated by ":(" and ")" down to
+  something like "sin(a-b)", for example.
+- Simplifying the multiplication, division, addition, subtraction, and
+  exponentiation of two numbers down to a single digit.
+- Simplifying boolean expressions by removing "not" and changing all
+  "and" keywords to "or" keywords, this helps in the recursive
+  process.
+- Removing "for" statements when able to with a corresponding
+  assignment statement, since "for" statements can cause heavy
+  recursion. 
+
+The last step is use the topmost pattern to check the modified code to
+see if it makes sense syntactically. In this algorithm, it is assumed
+that a procedure declaration is the topmost element of the supplied
+Algol 60 code. Since there may be more than one procedure declaration
+in a file, this topmost pattern is used in a loop that continues to
+check for procedure declarations every time it finds one. After the
+program exits this loop it checks to make sure whether or not the
+patterns replaced all elements of the modified input with an arbitrary
+number of '*' characters. If it is has, then it believes that it has
+received syntactically correct Algol 60 code. If not then it makes
+some adjustments on how to check for an assignment statement and loops
+through again. If both of these steps fail the program outputs a
+message of "No", if one of these steps succeeds then the program
+outputs a message of "Yes". Otherwise the program may be stuck in a
+recursive loop due to bad input, in that case it is usually safe to
+assume and answer of "No".
+
+II.4 Example logic flow
+
+II.4.1 Outline of capability for first draft
+
+1. Define patterns
+2. Get input
+3. Remove all whitespace, comments
+4. Begin pattern matching loop for some group
+5. Check if code was replaced by all '*' characters
+6. Output a yes if code was replaced by all '*' characters
+7. Output a no if code was replaced by all '*' characters
+8. End
+
+II.4.1 Diagram of current (final) capability
+
+(Includes improved patterns)
+1. Define patterns
+2. Get input
+3. Remove all whitespace, comments
+4. Go through shortcut stage, and simplifying stage to clean up code
+5. Make a copy of cleaned up input
+6. Begin pattern matching for procedure declaration
+7. If unsuccessful redefine assignment statement and check again
+8. Check if code was replaced by all '*' characters
+9. Output a yes if code was replaced by all '*' characters
+10. Output a no if code was replaced by all '*' characters
+11. End
+
+III. Implementation Documentation
+
+III.1 Source Code
+
+*	Class			CMPS450
+*	Section			001
+*	Problem			Snobol Semester Project
+*	Name			McKelvy, James Markus
+*	CLID			jmm0468
+*	Due Date		10:00pm November 19, 2007
+*
+*	[ALGOL_RECOGNIZER.SNO]
+*
+*	Takes an Algol60 program as input and outputs "Yes" or "No"
+*	if it is a syntactically correct program or not.
+*
+*
+********************************************************************************
+*	set max string length
+	&MAXLNGTH = 32767
+
+*	Define all patterns which are reproductions of Algol 60 BNFs
+	EMPTY = ""
+	LETTER = ANY(&UCASE &LCASE)
+	NON_MULT_LETTER = ANY("abcdefghijklmnopqrstuvwyz")
+	DIGIT = ANY("0123456789")
+	LOGICAL_VALUE = "true" | "false"
+	ADDING_OPERATOR = "+" | "-"
+	MULTIPLYING_OPERATOR = "X" | "/"
+	ARITHMETIC_OPERATOR = "^" | *MULTIPLYING_OPERATOR | *ADDING_OPERATOR
+	RELATIONAL_OPERATOR = "<=" | "<" | "=" | ">=" | ">" | "\="
+	LOGICAL_OPERATOR = "==" | "->" | "or" | "and" | "not"
+	SEQUENTIAL_OPERATOR = "goto" | "if" | "then" | "else" | "for" | "do"
+	OPERATOR = *SEQUENTIAL_OPERATOR | *LOGICAL_OPERATOR | *RELATIONAL_OPERATOR | *ARITHMETIC_OPERATOR
+	SEPARATOR = ":=" | ANY("#,.:;") | "step" | "until" | "while" | "comment"
+	BRACKET = ANY(")(]['") | "begin" | "end"
+	DECLARATOR = "own" | "Boolean" | "integer" | "real" | "array" | "switch" | "procedure"
+	SPECIFICATOR = "string" | "label" | "value"
+	DELIMITER = *SPECIFICATOR | *DECLARATOR | *BRACKET | *SEPARATOR | *OPERATOR
+	BASIC_SYMBOL = (*DELIMITER | *LOGICAL_VALUE | *DIGIT | *LETTER)
+
+	IDENTIFIER = *IDENTIFIER (*LETTER | *DIGIT) | *LETTER
+
+	UNSIGNED_INTEGER = *DIGIT *UNSIGNED_INTEGER | *DIGIT
+*	used for reducing long numbers to a single digit
+	UNSIGNED_INTEGER_MULTIDIGIT = *DIGIT *UNSIGNED_INTEGER | *DIGIT *DIGIT
+	UNSIGNED_NUMBER = *UNSIGNED_INTEGER "." *UNSIGNED_INTEGER | "." *UNSIGNED_INTEGER | *UNSIGNED_INTEGER
+	NUMBER = ("+" *UNSIGNED_NUMBER | "-" *UNSIGNED_NUMBER | *UNSIGNED_NUMBER)
+
+*	used in quickly identifying a simple subscript that is not an arithmetic expression
+	NUMBER_OR_IDENTIFIER = *NUMBER | *IDENTIFIER
+	
+	STRING_ELEMENT = LETTER | DIGIT | ANY(")(][#,.:;=+-X/\^<>") | '"'
+	STRING_CONTENTS = *STRING_ELEMENT *STRING_CONTENTS | *STRING_ELEMENT
+	STRING = "'" *STRING_CONTENTS "'" | "''"
+
+	EXPRESSION = (*ARITHMETIC_EXPRESSION | *BOOLEAN_EXPRESSION | *DESIGNATIONAL_EXPRESSION)
+
+*	used in quickly identifying a simple subscript that is not an arithmetic expression
+	SIMPLE_SUBSCRIPTS = NUMBER_OR_IDENTIFIER ARBNO("," *SIMPLE_SUBSCRIPTS)
+
+	SUBSCRIPTS = (*UNSIGNED_NUMBER | *VARIABLE | *ARITHMETIC_EXPRESSION) ARBNO("," *SUBSCRIPTS)
+	SUBSCRIPTED_VARIABLE = *IDENTIFIER "[" *SUBSCRIPTS "]"
+	VARIABLE = *IDENTIFIER "[" *SUBSCRIPTS "]" | *IDENTIFIER
+
+	LETTER_STRING = *LETTER *LETTER_STRING | *LETTER
+	ACTUAL_PARAMETER = (*STRING | *EXPRESSION | *IDENTIFIER)
+	ACTUAL_PARAMETER_LIST = *ACTUAL_PARAMETER ")" *LETTER_STRING ":(" *ACTUAL_PARAMETER_LIST | *ACTUAL_PARAMETER "," *ACTUAL_PARAMETER_LIST | *ACTUAL_PARAMETER 
+	FUNCTION_DESIGNATOR = *IDENTIFIER "(" *ACTUAL_PARAMETER_LIST ")" | *IDENTIFIER
+
+	PRIMARY = "(" *ARITHMETIC_EXPRESSION ")" | *SUBSCRIPTED_VARIABLE | *FUNCTION_DESIGNATOR | *VARIABLE | *UNSIGNED_NUMBER
+	FACTOR = *PRIMARY "^" *FACTOR | *PRIMARY
+	TERM = *FACTOR *MULTIPLYING_OPERATOR *TERM | *FACTOR
+	SIMPLE_ARITHMETIC_EXPRESSION = *TERM *ADDING_OPERATOR *SIMPLE_ARITHMETIC_EXPRESSION | *ADDING_OPERATOR *TERM | *TERM
+	ARITHMETIC_EXPRESSION = *IF_CLAUSE *SIMPLE_ARITHMETIC_EXPRESSION "else" *ARITHMETIC_EXPRESSION | *SIMPLE_ARITHMETIC_EXPRESSION
+
+	IF_CLAUSE = "if" *BOOLEAN_EXPRESSION "then"
+	RELATION = *ARITHMETIC_EXPRESSION *RELATIONAL_OPERATOR *ARITHMETIC_EXPRESSION 
+*	alternate definition of boolean primary that was causing few issues
+*	BOOLEAN_PRIMARY = *RELATION | *FUNCTION_DESIGNATOR | *LOGICAL_VALUE | *VARIABLE | "(" *BOOLEAN_EXPRESSION ")"
+	BOOLEAN_PRIMARY = "(" *BOOLEAN_EXPRESSION ")" | *RELATION | *FUNCTION_DESIGNATOR | *VARIABLE | *LOGICAL_VALUE
+	BOOLEAN_SECONDARY = "not" *BOOLEAN_PRIMARY | *BOOLEAN_PRIMARY
+	BOOLEAN_FACTOR = *BOOLEAN_SECONDARY "and" *BOOLEAN_FACTOR | *BOOLEAN_SECONDARY
+	BOOLEAN_TERM = *BOOLEAN_FACTOR "or" *BOOLEAN_TERM | *BOOLEAN_FACTOR
+	IMPLICATION = *BOOLEAN_TERM "->" *IMPLICATION | *BOOLEAN_TERM 
+	SIMPLE_BOOLEAN = *IMPLICATION "==" *SIMPLE_BOOLEAN | *IMPLICATION
+	BOOLEAN_EXPRESSION = *IF_CLAUSE *SIMPLE_BOOLEAN "else" *BOOLEAN_EXPRESSION | *SIMPLE_BOOLEAN
+
+	LABEL = *IDENTIFIER | *UNSIGNED_INTEGER 
+	SWITCH_DESIGNATOR = *IDENTIFIER "[" *ARITHMETIC_EXPRESSION "]"
+	SIMPLE_DESIGNATIONAL_EXPRESSION = *SWITCH_DESIGNATOR | *LABEL | "(" *DESIGNATIONAL_EXPRESSION ")"
+	DESIGNATIONAL_EXPRESSION = *IF_CLAUSE *SIMPLE_DESIGNATIONAL_EXPRESSION "else" *DESIGNATIONAL_EXPRESSION | *SIMPLE_DESIGNATIONAL_EXPRESSION
+
+	LEFT_PART_LIST = *VARIABLE ":=" *LEFT_PART_LIST | *VARIABLE ":="
+*	since the assignment state could go two ways (arithmetic | boolean) or (boolean | arithmetic)
+*	the program first checks this way, if it fails then it gives the alternate definition for assignment 
+*	statement and checks it
+	ASSIGNMENT_STATEMENT = *LEFT_PART_LIST (*ARITHMETIC_EXPRESSION | *BOOLEAN_EXPRESSION)
+
+	GOTO_STATEMENT = "goto" *DESIGNATIONAL_EXPRESSION
+	DUMMY_STATEMENT = *LABEL ":"
+
+	FOR_LIST_ELEMENT = *ARITHMETIC_EXPRESSION "while" *BOOLEAN_EXPRESSION | *ARITHMETIC_EXPRESSION "step" *ARITHMETIC_EXPRESSION "until" *ARITHMETIC_EXPRESSION | *ARITHMETIC_EXPRESSION
+	FOR_LIST = *FOR_LIST_ELEMENT "," *FOR_LIST | *FOR_LIST_ELEMENT
+	FOR_CLAUSE = "for" *VARIABLE ":=" *FOR_LIST "do" *FOR_CLAUSE | "for" *VARIABLE ":=" *FOR_LIST "do"
+	FOR_STATEMENT = *LABEL ":" *FOR_STATEMENT | *FOR_CLAUSE *STATEMENT
+
+	PROCEDURE_STATEMENT = *IDENTIFIER "(" *ACTUAL_PARAMETER_LIST ")"
+	DECLARATION = *PROCEDURE_DECLARATION | *SWITCH_DECLARATION | *ARRAY_DECLARATION | *TYPE_DECLARATION
+
+	TYPE_LIST = *IDENTIFIER "," *TYPE_LIST | *IDENTIFIER
+	TYPE = "real" | "integer" | "Boolean"
+	LOCAL_OR_OWN_TYPE = "own" *TYPE | *TYPE
+	TYPE_DECLARATION = *LOCAL_OR_OWN_TYPE *TYPE_LIST
+
+	BOUND_PAIR_LIST = *ARITHMETIC_EXPRESSION ":" *ARITHMETIC_EXPRESSION "," *BOUND_PAIR_LIST | *ARITHMETIC_EXPRESSION ":" *ARITHMETIC_EXPRESSION
+	ARRAY_SEGMENT = *IDENTIFIER ("," *ARRAY_SEGMENT | "[" *BOUND_PAIR_LIST "]")
+	ARRAY_LIST = *ARRAY_SEGMENT "," *ARRAY_LIST | *ARRAY_SEGMENT
+	ARRAY_DECLARATION = *LOCAL_OR_OWN_TYPE "array" *ARRAY_LIST | "array" *ARRAY_LIST
+
+	SWITCH_LIST = *SWITCH_LIST "," *DESIGNATIONAL_EXPRESSION | *DESIGNATIONAL_EXPRESSION
+	SWITCH_DECLARATION = "switch" *IDENTIFIER ":=" *SWITCH_LIST
+
+	FORMAL_PARAMETER_LIST = *IDENTIFIER ")" *LETTER_STRING ":(" *FORMAL_PARAMETER_LIST | *IDENTIFIER "," *FORMAL_PARAMETER_LIST | *IDENTIFIER
+	FORMAL_PARAMETER_PART = "(" *FORMAL_PARAMETER_LIST ")"
+	IDENTIFIER_LIST = *IDENTIFIER "," *IDENTIFIER_LIST | *IDENTIFIER
+	VALUE_PART = "value" *IDENTIFIER_LIST ";"
+	SPECIFIER = *TYPE ("procedure" | "array" | "") | ("procedure" | "array" | "switch" | "label" | "string")
+	SPECIFICATION_PART = *SPECIFIER *IDENTIFIER_LIST ";" *SPECIFICATION_PART | *SPECIFIER *IDENTIFIER_LIST ";"
+	PROCEDURE_HEADING = *IDENTIFIER (*FORMAL_PARAMETER_PART | "") ";" (*VALUE_PART | "") (*SPECIFICATION_PART | "")
+	PROCEDURE_DECLARATION = *TYPE "procedure" *PROCEDURE_HEADING *STATEMENT | "procedure" *PROCEDURE_HEADING *STATEMENT
+
+	UNCONDITIONAL_STATEMENT = *BLOCK | *COMPOUND_STATEMENT | *FOR_STATEMENT | *BASIC_STATEMENT
+	IF_STATEMENT = *LABEL ":" *IF_STATEMENT | *IF_CLAUSE *UNCONDITIONAL_STATEMENT
+	CONDITIONAL_STATEMENT = *IF_STATEMENT "else" *STATEMENT | *IF_STATEMENT 
+
+	UNLABELLED_BASIC_STATEMENT = *ASSIGNMENT_STATEMENT | *GOTO_STATEMENT | *PROCEDURE_STATEMENT | *DUMMY_STATEMENT
+	BASIC_STATEMENT = *LABEL ":" *BASIC_STATEMENT | *UNLABELLED_BASIC_STATEMENT
+	STATEMENT = *CONDITIONAL_STATEMENT | *UNCONDITIONAL_STATEMENT
+	COMPOUND_TAIL = *STATEMENT ";" *COMPOUND_TAIL | *STATEMENT "end"
+	COMPOUND_STATEMENT = *LABEL ":" *COMPOUND_STATEMENT | "begin" *COMPOUND_TAIL
+	BLOCK_DECLARATIONS = ";" *DECLARATION *BLOCK_DECLARATIONS | ";" *DECLARATION | ""
+	BLOCK_HEAD = "begin" *DECLARATION *BLOCK_DECLARATIONS
+	BLOCK = *LABEL ":" *BLOCK | *BLOCK_HEAD ";" *COMPOUND_TAIL
+
+********************************************************************************
+	WHITESPACE = " " | "	"
+	COMMENT = "comment"
+	SEMICOLON = ";"
+
+*	begin removing unnecessary elements, such as comments, whitespace
+*	read in each line, append to previous line
+REM	
+	LINE COMMENT BREAK(SEMICOLON) SEMICOLON = 
+	LINE WHITESPACE =							:S(REM)
+	INPUT('TMPLINE',5,32767)	
+	LINE = LINE TMPLINE							:S(REM)
+
+*	convert all uppercase to lowercase
+	LINE = REPLACE(LINE, "ABCDEFGHIJKLMNOPQRSTUVWYZ", "abcdefghijklmnopqrstuvwyz")
+
+*	status echoes
+*	OUTPUT =
+*	OUTPUT = "Checking..."
+
+*	any optimizations go here. these help speed up execution by simplifying complex elements
+	LINE ANY("+-/^<>=,;[(") "," :S(NO)
+	LINE "," ANY("+-/^<>=,;])") :S(NO)
+	LINE ANY("=<>/") ":" :S(NO)
+	LINE "]" NON_MULT_LETTER :S(ISEND)
+	LINE "]" DIGIT :S(NO)
+	:(OPT)
+
+ISEND
+	LINE "]end" :F(NO)
+
+OPT 
+*	OUTPUT =
+*	OUTPUT = "-> " LINE
+	LINE UNSIGNED_INTEGER_MULTIDIGIT = "1" :S(OPT)
+	LINE "[" SIMPLE_SUBSCRIPTS "]" = :S(OPT)
+	LINE "," NUMBER_OR_IDENTIFIER "," = "," :S(OPT)
+	LINE IDENTIFIER ":(" ACTUAL_PARAMETER_LIST ")" =	:S(OPT)
+	LINE NUMBER MULTIPLYING_OPERATOR NUMBER NOTANY("abcdefghijklmnopqrstuvwyz") = "1" :S(OPT)
+	LINE NUMBER ADDING_OPERATOR NUMBER NOTANY("abcdefghijklmnopqrstuvwyz") = "1" :S(OPT)
+	LINE NUMBER "^" NUMBER = "1" :S(OPT)
+	LINE "not" = "n" :S(OPT)
+	LINE "and" = "or" :S(OPT)
+	LINE "or" LETTER "or" = "or" :S(OPT)
+	LINE "for" VARIABLE ":=" FOR_LIST "do" STATEMENT = "a:=a1a1a1a" :S(OPT)
+	LINE ANY(",[]();") DIGIT NON_MULT_LETTER :S(NO)
+
+*	previous statement may have gobbled an "end", fix it.
+	LINE "a:=a1a1a1a" RPOS(0) = "a:=bend"
+*	OUTPUT = "-> " LINE
+
+*	make a backup of the input so it is easy to test alternative solution
+	BKLINE = LINE
+
+* 	LINE BLOCK_HEAD = "begin*"					
+* 	LINE "*;" ASSIGNMENT_STATEMENT ";" = "*;"		
+* 	LINE "*;" =	"realr;"						
+* 	LINE ";" ASSIGNMENT_STATEMENT "end" = "end"	
+	
+********************************************************************************
+LOOP
+*	Unit tests of individual patterns
+*	LINE LETTER = "*" :S(LOOP)
+*	LINE IDENTIFIER = "*"	:S(LOOP)
+*	LINE NUMBER = "*"	:S(LOOP)
+*	LINE STRING = "*"	:S(LOOP)
+*	LINE SUBSCRIPTS = "*"	:S(LOOP)
+*	LINE VARIABLE = "*"	:S(LOOP)
+*	LINE FUNCTION_DESIGNATOR = "*"	:S(LOOP)
+*	LINE ARITHMETIC_EXPRESSION = "*"	:S(LOOP)
+*	LINE BOOLEAN_EXPRESSION = "*"	:S(LOOP)
+*	LINE DESIGNATIONAL_EXPRESSION = "*"	:S(LOOP)
+*	LINE BASIC_STATEMENT = "*"	:S(LOOP)
+*	LINE COMPOUND_STATEMENT = "*"	:S(LOOP)
+*	LINE BLOCK = "*"		:S(LOOP)
+*	LINE ASSIGNMENT_STATEMENT = "*"				:S(LOOP)
+*	LINE GOTO_STATEMENT = "*"	:S(LOOP)
+*	LINE DUMMY_STATEMENT = "*"	:S(LOOP)
+*	LINE CONDITIONAL_STATEMENT = "*"	:S(LOOP)
+*	LINE FOR_STATEMENT = "*"	:S(LOOP)
+*	LINE PROCEDURE_STATEMENT = "*"	:S(LOOP)
+*	LINE TYPE_DECLARATION = "*" :S(LOOP)
+*	LINE ARRAY_DECLARATION = "*" :S(LOOP)
+*	LINE SWITCH_DECLARATION = "*" :S(LOOP)
+*	LINE FORMAL_PARAMETER_LIST = "*"	:S(LOOP)
+*	LINE STATEMENT = "*"	:S(LOOP)
+	LINE PROCEDURE_DECLARATION = "*" :S(LOOP)
+
+*	Check if all patterns matched successfully
+*	OUTPUT = "=> " LINE
+	LINE POS(0) SPAN("*") RPOS(0) :S(YES)
+
+*	Try alternate assignment statement and see if it works
+	ASSIGNMENT_STATEMENT = *LEFT_PART_LIST (*BOOLEAN_EXPRESSION | *ARITHMETIC_EXPRESSION)
+
+TRYAGAINLOOP
+	BKLINE PROCEDURE_DECLARATION = "*" :S(TRYAGAINLOOP)
+
+*	Check if all patterns matched successfully
+*	OUTPUT = "=> " BKLINE
+	BKLINE POS(0) SPAN("*") RPOS(0) 				:S(YES)F(NO)
+
+********************************************************************************
+*	Valid Algol 60
+YES	OUTPUT = "Yes"							:(END)
+
+*	Not valid Algol 60
+NO	OUTPUT = "No"							:(END)
+
+END
+
+IV. Verification and Validation Documentation
+
+IV.1 Test Plan
+Go through each pattern and supply valid or invalid input. Check that
+the output generated is correct. Check that the program gave the right
+answer in a sufficient amount of time. Improve execution time if it is
+unsatisfactory, check and correct related patterns if output was
+incorrect. Develop a list of test cases used on the program. For
+each test case test a particular "Pattern Type". Supply input that the
+Algol 60 report listed as example input, or create more test
+cases. The pattern corresponding to "Pattern Type" is should be used
+in the program and its execution time recorded. Start the test cases
+with simple patterns and progressively move on to more complex
+patterns. Within each pattern, the input starts with a simple example
+and then more difficult variations should be used.
+
+IV.2 Test Results
+In the following tests, the pattern type is listed that was used for
+matching the input. Next the input is listed and the corresponding
+output. If the listed pattern was matched to the input, a "Yes" is the
+output, if it was not then a "No" is the output. The expected output
+is listed and the time is recorded for each test for reference
+purposes. 
+
+--------------------------------------------------------------------------------
+Pattern Type: IDENTIFIER
+Input: q
+Output: Yes
+Expected Value: Yes
+Time: 0m0.005s
+
+--------------------------------------------------------------------------------
+Pattern Type: IDENTIFIER
+Input: Soup
+Output: Yes
+Expected Value: Yes
+Time: 0m0.005s
+
+--------------------------------------------------------------------------------
+Pattern Type: IDENTIFIER
+Input: V17a
+Output: Yes
+Expected Value: Yes
+Time: 0m0.005s
+
+--------------------------------------------------------------------------------
+Pattern Type: IDENTIFIER
+Input: a34TMNs
+Output: Yes
+Expected Value: Yes
+Time: 0m0.005s
+
+--------------------------------------------------------------------------------
+Pattern Type: IDENTIFIER
+Input: MARILYN
+Output: Yes
+Expected Value: Yes
+Time: 0m0.005s
+
+--------------------------------------------------------------------------------
+Pattern Type: IDENTIFIER
+Input: 888ff	comment not valid, should return "No";
+Output: No
+Expected Value: No
+Time: 0m0.007s
+
+--------------------------------------------------------------------------------
+Pattern Type: IDENTIFIER
+Input: a+b
+Output: No
+Expected Value: No
+Time: 0m0.115s
+
+--------------------------------------------------------------------------------
+Pattern Type: IDENTIFIER
+Input: aaaaaa;
+Output: No
+Expected Value: No
+Time: 0m0.099s
+
+--------------------------------------------------------------------------------
+Pattern Type: NUMBER
+Input: 0
+Output: Yes
+Expected Value: Yes
+Time: 0m0.005s
+
+--------------------------------------------------------------------------------
+Pattern Type: NUMBER
+Input: 177
+Output: Yes
+Expected Value: Yes
+Time: 0m0.005s
+
+--------------------------------------------------------------------------------
+Pattern Type: NUMBER
+Input: .5384
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: NUMBER
+Input: +0.7300
+Output: Yes
+Expected Value: Yes
+Time: 0m0.007s
+
+--------------------------------------------------------------------------------
+Pattern Type: NUMBER
+Input: -200.084
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: NUMBER
+Input: -9999999999999999999999200.0848888888888888888888888888888888
+Output: Yes
+Expected Value: Yes
+Time: 0m0.005s
+
+--------------------------------------------------------------------------------
+Pattern Type: NUMBER
+Input: -.083-03 comment actually two numbers ;
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: NUMBER
+Input: apple
+Output: No
+Expected Value: No
+Time: 0m0.123s
+
+--------------------------------------------------------------------------------
+Pattern Type: NUMBER
+Input: 3a
+Output: No
+Expected Value: No
+Time: 0m0.121s
+
+--------------------------------------------------------------------------------
+Pattern Type: NUMBER
+Input: 3.a
+Output: No
+Expected Value: No
+Time: 0m0.121s
+
+--------------------------------------------------------------------------------
+Pattern Type: STRING
+Input: 'fljeie0824nwociwohueuhfwefbfpweqoiu////'
+Output: Yes
+Expected Value: Yes
+Time: 0m0.005s
+
+--------------------------------------------------------------------------------
+Pattern Type: STRING
+Input: 'fljeie0824nwociwohueuhfwefbfpweqoiu////fljeie08
+	   24nwociwohueuhf
+	   wefbfpweqoiu////fljeie0824nwociwohueuhfwefbfpweqoiu////'   
+Output: Yes
+Expected Value: Yes
+Time: 0m0.007s
+
+--------------------------------------------------------------------------------
+Pattern Type: STRING
+Input: apple
+Output: No
+Expected Value: No
+Time: 0m0.134s
+
+--------------------------------------------------------------------------------
+Pattern Type: STRING
+Input: 'apple''
+Output: No
+Expected Value: No
+Time: 0m0.129s
+
+--------------------------------------------------------------------------------
+Pattern Type: STRING
+Input: 'apple"'
+Output: Yes
+Expected Value: Yes
+Time: 0m0.109s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: epsilon
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: detA
+Output: Yes
+Expected Value: Yes
+Time: 0m0.005s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: 'apple'
+Output: No
+Expected Value: No
+Time: 0m0.115s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: 1apple
+Output: No
+Expected Value: No
+Time: 0m0.119s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: apple+orange
+Output: No
+Expected Value: No
+Time: 0m0.143s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: a23038fjffffffffffffffffffa130311030831301317
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: Q[2]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: Q[7,2]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: 1appleXorange[b]
+Output: No
+Expected Value: No
+Time: 0m0.137s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: Qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq[7,2,4,2,2,4,6]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: xxxxx[sin(nXpi/2),QQQQQQQQ[3,n,4]]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.024s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: xxxxx[sin(nXpi/2),QQQQQQQQ[3,n,4,]]
+Output: No
+Expected Value: No
+Time: 0m0.437s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: xxxxx[sin(nXpi/2/),QQQQQQQQ[3,n,4]]
+Output: No
+Expected Value: No
+Time: 0m0.442s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: x[Q[sin(nXpi/2)],Q[3,n,4,4,3,5,4]]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.008s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: x[Q[sin(nXpi/2)],Q[3888888888888888888888888,n,4,4,3,5,4]]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.011s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: x[Q[sin(sin(nXpi/2nXpi2)],Q[3888888888888888888888888,n,4,4,3,5,4]]
+Output: No
+Expected Value: No
+Time: 0m0.072s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: x[Q[sin(sin(nXpi/2nXpi2))],Q[3888888888888888888888888,n,4,4,3,5,4]]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.019s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: x[Q[sin(sin(nXpi/2nXpi2))],Q[3888888888888888888888888,n,4,4,3,5,4]]]
+Output: No
+Expected Value: No
+Time: 0m0.551s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: x[Q[sin(sin(nXpi/2nXpi2))],Q[3888888888888888888888888,1n,4,4,3,5,4]]
+Output: No
+Expected Value: No
+Time: 0m0.127s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input:
+x[Q[sin(sin(nXpi/2nXpi2))],1Q[3888888888888888888888888,1,4,4,3,5,4]]
+Output: No
+Expected Value: No
+Time: 0m8.509s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: x[Q[sin(sin(nXpi/2nXpi2))],Q[3888888888888888888888888,1,4,4,3,5,4b]]
+Output: No
+Expected Value: No
+Time: 0m0.116s
+
+--------------------------------------------------------------------------------
+Pattern Type: VARIABLE
+Input: x[Q[sin(sin(nXpi/2nXpi2))],Q[388b8888888888888888888888,1,4,4,3,5,4]]
+Output: No
+Expected Value: No
+Time: 0m0.144s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: R
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: sin(a-b)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: sin(a-3b)
+Output: No
+Expected Value: No
+Time: 0m0.122s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: sin(3a-b)
+Output: No
+Expected Value: No
+Time: 0m0.126s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: J(v+s,n)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: J(v+s+,n)
+Output: No
+Expected Value: No
+Time: 0m0.122s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: S(s-5)Temperature:(T)Pressure:(P)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.007s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: S(s-5)Temperature:(T)P3ressure:(P)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.137s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: S(s-5)0Temperature:(T)Pressure:(P)
+Output: No
+Expected Value: No
+Time: 0m0.119s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: S(s-5)Temperature:(T):Pressure:(P)
+Output: No
+Expected Value: No
+Time: 0m0.131s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: S(s-5)Temperature(T)Pressure:(P) comment two function designators;
+Output: Yes
+Expected Value: Yes
+Time: 0m0.145s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: Compile(' := ')Stack:(Q)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: S(s-5)Temperature:(T)Pressure:(P)Temperature:(T)Pressure:(P)Pressure:(P)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.022s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: J(v+s,n,v+s,n,n,v+s,n,n,v+s,n,n,v+s,n,n,v+s,n,n,v+s,n,n,v+s,n)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.019s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: Compile(' := ')Stack:(Q,n,n,v+s,n,n,v+s,n,nn,n,v+s,n,n,v+s,n,
+n,v+s,v+s,n)Temperature:(T)Pressure:(P)Temperature:(T)Pressure:(P)Press
+ure:(P)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.185s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: Compile(' := ')Stack:(Q,n,n,v+s,n,n,v+s,n,nn,n,v+s,n,n,v+s,n,
+n,v+s,v+s-,n)Temperature:(T)Pressure:(P)Temperature:(T)Pressure:(P)Press
+ure:(P)
+Output: No
+Expected Value: No
+Time: 0m0.118s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: Compile(' := ')Stack:(Q,n,n,v+s,n,n,v+s,n,nn,n,v+s,n,n,v+s,n,
+n,v+s,v+s,)Temperature:(T)Pressure:(P)Temperature:(T)Pressure:(P)Press
+ure:(P)
+Output: No
+Expected Value: No
+Time: 0m0.132s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: Compile(' := ')Stack:(Q,n,n,v+s,n,n,v+s,n,nn,n,v+s,n,n,v+s,n,
+n,v+s,v+s)Temperature:((T)Pressure:(P)Temperature:(T)Pressure:(P)Press
+ure:(P)
+Output: No
+Expected Value: No
+Time: 0m35.247s
+
+--------------------------------------------------------------------------------
+Pattern Type: FUNCTION_DESIGNATOR
+Input: Compile(' := ')Stack:(Q,n,n,v+s,n,n,v+s,n,nn,n,v+s,n,n,v+s,n,
+n,v+s,v+s)Temperature:(T))Pressure:(P)Temperature:(T)Pressure:(P)Press
+ure:(P)
+Output: No
+Expected Value: No
+Time: 0m1.241s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: 7.394-8
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: 7.394--8
+Output: Yes
+Expected Value: Yes
+Time: 0m0.115s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: 7.394-+8
+Output: Yes
+Expected Value: Yes
+Time: 0m0.134s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: 7.394-+-8
+Output: No
+Expected Value: No
+Time: 0m0.127s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: 7.394//8
+Output: No
+Expected Value: No
+Time: 0m0.115s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: 7.394//-8
+Output: No
+Expected Value: No
+Time: 0m0.121s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: 7.394/-8
+Output: Yes
+Expected Value: Yes
+Time: 0m0.111s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: sum
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: w[i+2,8]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: w[i++2,8]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.131s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: w[i+2,8/]
+Output: No
+Expected Value: No
+Time: 0m0.123s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: cos(y+zX3)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.008s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: cos(X/X/X/-X/X/X/X/X/X)
+Output: No
+Expected Value: No
+Time: 0m0.412s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: (a-3/y+vu^8)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.007s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: (a-3/y+vu^8^b^3^a^9^)
+Output: No
+Expected Value: No
+Time: 0m0.164s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: sum^cos(y+zX3)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.012s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: sum^cos(y+zX3)+(a-3/y+vu^8)+cos(y+zX3)+w[i+2,8]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.049s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: sum^cos(y+zX3)+(a-3/y+vu^8b)+cos(y+zX--3)+w[i+2,8]
+Output: No
+Expected Value: No
+Time: 0m0.113s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: 7.394 - 8^w[i+2,8]^(a-3/y + vu ^8 )
+Output: Yes
+Expected Value: Yes
+Time: 0m0.012s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: omegaXsum^cos(y+zX3)/7.934-8^w[i+2,8]^(a-3/y+vu-8)	
+Output: Yes
+Expected Value: Yes
+Time: 0m0.052s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: U-Yu+omegaXsum^cos(y+zX3)/7.934-8^w[i+2,8]^(a-3/y+vu^8)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.053s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: wXu-Q(S+Cu)^2
+Output: Yes
+Expected Value: Yes
+Time: 0m0.007s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: if q > 0 then S+3XQ/A else 2XS + 3Xqn
+Output: Yes
+Expected Value: Yes
+Time: 0m0.119s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: if q >> 0 then S+3XQ/A else 2XS + 3Xqn 
+Output: No
+Expected Value: No
+Time: 0m0.154s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: if q > 0 then S+3XQ/A elelseelsese 2XS + 3Xqn 
+Output: Yes
+Expected Value: Yes
+Time: 0m0.150s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: ifa< 0thenU+V else if aXb > 17 then U/V else if k \= y then V/U
+else 0 
+Output: Yes
+Expected Value: Yes
+Time: 0m0.182s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: ifa< 0thenU+V else if aXb > 17 then U/V else if k \= y then V/U
+Output: No
+Expected Value: No
+Time: 0m0.213s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: ifa< 0thenU+V else else if aXb > 17 then U/V else if k \= y
+then V/U else 0 
+Output: Yes
+Expected Value: Yes
+Time: 0m0.252s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: aXsin(omegaXt)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.019s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: 0.5712Xa[nX(N-1)/2,0]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.026s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: 0.d5712Xa[nX(N-1)/2,0]
+Output: No
+Expected Value: No
+Time: 0m0.147s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: (AXrctan(y) + Z) ^(7+Q)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.096s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: if q then n - 1 else n
+Output: Yes
+Expected Value: Yes
+Time: 0m0.008s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: if q then n - 1 else nelse
+Output: No
+Expected Value: No
+Time: 0m0.129s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARITHMETIC_EXPRESSION
+Input: if a < 0 then A/B else if b = 0 then B/A else z
+Output: Yes
+Expected Value: Yes
+Time: 0m0.044s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: y = -1
+Output: Yes
+Expected Value: Yes
+Time: 0m0.007s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: Y > V or z < q
+Output: Yes
+Expected Value: Yes
+Time: 0m0.007s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: Y > V orand z < q
+Output: Yes
+Expected Value: Yes
+Time: 0m0.134s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: Y > V  < q
+Output: No
+Expected Value: No
+Time: 0m0.128s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: a+b > -5 and z - d > q ^2
+Output: Yes
+Expected Value: Yes
+Time: 0m0.034s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: a+b > -5 and z - d > q and ^2
+Output: No
+Expected Value: No
+Time: 0m0.124s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: if a < 0 then A/B else if b = 0 then B/A else z
+Output: No
+Expected Value: No
+Time: 0m0.439s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: p and q or x \=y
+Output: Yes
+Expected Value: Yes
+Time: 0m0.012s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: p and b<>q or x \=y
+Output: No
+Expected Value: No
+Time: 0m0.149s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: g == not a and b and not c or d or e -> not f
+Output: Yes
+Expected Value: Yes
+Time: 0m0.216s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: g == not a and b and not c or d or e -> not f and a and b and c 
+Output: Yes
+Expected Value: Yes
+Time: 0m0.945s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: g === not a and b and not c or d or e -> not f and a and b and
+c 
+Output: No
+Expected Value: No
+Time: 0m0.223s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: g == not a and b and not c or d or e -> not f -> andandandand c 
+Output: Yes
+Expected Value: Yes
+Time: 0m0.303s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: g == not a and b and not c or d or e -> not f -> -> andandandand c 
+Output: No
+Expected Value: No
+Time: 0m0.394s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: if k<1 then s>w else h <= c
+Output: Yes
+Expected Value: Yes
+Time: 0m0.010s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: if k<1 then s>w else h <=> c
+Output: No
+Expected Value: No
+Time: 0m0.117s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: if k<1 then s><w else helse == c
+Output: No
+Expected Value: No
+Time: 0m0.208s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: if if if a then b else c then d else f then g else h < k
+Output: Yes
+Expected Value: Yes
+Time: 0m0.036s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: if if if if if if a then b else c then d else f then g else h < k
+Output: Yes
+Expected Value: Yes
+Time: 0m0.140s
+
+--------------------------------------------------------------------------------
+Pattern Type: BOOLEAN_EXPRESSION
+Input: Y > V or z < q or a+b > -5 and z - d > q ^2 and p and q or x
+\=y or g == not a and b and not c or d or e -> not f 
+Output: Yes
+Expected Value: Yes
+Time: 0m8.192s
+
+--------------------------------------------------------------------------------
+Pattern Type: DESIGNATIONAL_EXPRESSION
+Input: 17
+Output: Yes
+Expected Value: Yes
+Time: 0m0.005s
+
+--------------------------------------------------------------------------------
+Pattern Type: DESIGNATIONAL_EXPRESSION
+Input: p9
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: DESIGNATIONAL_EXPRESSION
+Input: Choose[n-1]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.007s
+
+--------------------------------------------------------------------------------
+Pattern Type: DESIGNATIONAL_EXPRESSION
+Input: Choose[1n-1]
+Output: No
+Expected Value: No
+Time: 0m0.111s
+
+--------------------------------------------------------------------------------
+Pattern Type: DESIGNATIONAL_EXPRESSION
+Input: Town[if y < 0 then N else N+1]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.008s
+
+--------------------------------------------------------------------------------
+Pattern Type: DESIGNATIONAL_EXPRESSION
+Input: Town[if y < 0 then N-- else N+1]
+Output: No
+Expected Value: No
+Time: 0m0.143s
+
+--------------------------------------------------------------------------------
+Pattern Type: DESIGNATIONAL_EXPRESSION
+Input: if Ab < c then 17 else q[if w <= 0 then 2 else n]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.164s
+
+--------------------------------------------------------------------------------
+Pattern Type: DESIGNATIONAL_EXPRESSION
+Input: if Ab < c then 17 else q[if w <= 0b then 2 else n]
+Output: No
+Expected Value: No
+Time: 0m0.202s
+
+--------------------------------------------------------------------------------
+Pattern Type: BASIC_STATEMENT
+Input: a := p+q
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: BASIC_STATEMENT
+Input: a = p+q
+Output: No
+Expected Value: No
+Time: 0m0.116s
+
+--------------------------------------------------------------------------------
+Pattern Type: BASIC_STATEMENT
+Input: go to Naples
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: BASIC_STATEMENT
+Input: go to Hell now + 2
+Output: No
+Expected Value: No
+Time: 0m0.129s
+
+--------------------------------------------------------------------------------
+Pattern Type: BASIC_STATEMENT
+Input: START: CONTINUE: W:=7.993
+Output: Yes
+Expected Value: Yes
+Time: 0m0.012s
+
+--------------------------------------------------------------------------------
+Pattern Type: BASIC_STATEMENT
+Input: START: CONTINUE: 1W:=7.993
+Output: No
+Expected Value: No
+Time: 0m0.142s
+
+--------------------------------------------------------------------------------
+Pattern Type: BASIC_STATEMENT
+Input: START: 1CONTINUE: W:=7.993
+Output: No
+Expected Value: No
+Time: 0m0.141s
+
+--------------------------------------------------------------------------------
+Pattern Type: BASIC_STATEMENT
+Input: a := pXq+fffa+e+q/fXaDXkg+s-so
+Output: Yes
+Expected Value: Yes
+Time: 0m0.015s
+
+--------------------------------------------------------------------------------
+Pattern Type: COMPOUND_STATEMENT
+Input: 
+begin x:=0 ; for y := 1 step 1 until n do x:= x+A[y]; if x > q then go
+to STOP else if x > w - 2 then go to S; Aw: St: W: = x+bob end
+Output: Yes
+Expected Value: Yes
+Time: 0m0.662s
+
+--------------------------------------------------------------------------------
+Pattern Type: COMPOUND_STATEMENT
+Input: 
+begin x:=0 b:=2 ; for y := 1 step 1 until n do x:= x+A[y]; if x > q then go
+to STOP else if x > w - 2 then go to S; Aw: St: W: = x+bob end
+Output: No
+Expected Value: No
+Time: 0m0.253s
+
+--------------------------------------------------------------------------------
+Pattern Type: COMPOUND_STATEMENT
+Input: 
+begin x:=0 ; iffor y := 1 step 1 until n do x:= x+A[y]; if x > q then go
+to STOP else if x > w - 2 then go to S; Aw: St: W: = x+bob end
+Output: Yes
+Expected Value: Yes
+Time: 0m0.807s
+
+--------------------------------------------------------------------------------
+Pattern Type: COMPOUND_STATEMENT
+Input: 
+begin x:=0 ; iffor y := 1 step 1 until n do x:= x+A[y]; if x > q then go
+to STOP else if x > w - 2 then go 0to S; Aw: St: W: = x+bob end
+Output: No
+Expected Value: No
+Time: 0m12.533s
+
+--------------------------------------------------------------------------------
+Pattern Type: COMPOUND_STATEMENT
+Input: 
+begin x:=0 ; iffor y := 1 step 1 until n do x:= x+A[y]; if x > q then go
+to STOP else if x > w - 2 then go to S; Aw: 1St: W: = x+bob end
+Output: No
+Expected Value: No
+Time: 0m12.249s
+
+--------------------------------------------------------------------------------
+Pattern Type: BLOCK
+Input:
+Q: begin integer i,k; real w; for i:= 1 step 1 until m do for k:=i+1
+step 1 until m do begin w := A[i,k] ; A[i,k] := A[k,i] ; A[k,i] := w
+end for i and k end
+Output: Yes
+Expected Value: Yes
+Time: 0m0.188s
+
+--------------------------------------------------------------------------------
+Pattern Type: BLOCK
+Input:
+Q: begin integer i,k; real w; for i::= 1 step 1 until m do for k:=i+1
+step 1 until m do begin w := A[i,k] ; A[i,k] := A[k,i] ; A[k,i] := w
+end for i and k end 
+Output: No
+Expected Value: No
+Time: 0m0.272s
+
+--------------------------------------------------------------------------------
+Pattern Type: BLOCK
+Input:
+Q: begin integer i,k; real w; for i:== 1 step 1 until m do for k:=i+1
+step 1 until m do begin w := A[i,k] ; A[i,k] := A[k,i] ; A[k,i] := w
+end for i and k end 
+Output: No
+Expected Value: No
+Time: 0m0.316s
+
+--------------------------------------------------------------------------------
+Pattern Type: BLOCK
+Input:
+Q: begin integer i,k; real w; for i:= 1 step 1 until m do for k:=i+1
+step 1 until m do begin w := A[i,k] ; A[i,[k]] := A[k,i] ; A[k,i] := w
+end for i and k end 
+Output: No
+Expected Value: No
+Time: 0m1.092s
+
+--------------------------------------------------------------------------------
+Pattern Type: ASSIGNMENT_STATEMENT
+Input: s := p[0] := n := n+1+s
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: ASSIGNMENT_STATEMENT
+Input: s := p[0] := n := n+1+s :=
+Output: No
+Expected Value: No
+Time: 0m0.123s
+
+--------------------------------------------------------------------------------
+Pattern Type: ASSIGNMENT_STATEMENT
+Input: n := n+1
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: ASSIGNMENT_STATEMENT
+Input: n := n+1+1n
+Output: No
+Expected Value: No
+Time: 0m0.134s
+
+--------------------------------------------------------------------------------
+Pattern Type: ASSIGNMENT_STATEMENT
+Input: A : = B/C - v -q Xs
+Output: Yes
+Expected Value: Yes
+Time: 0m0.007s
+
+--------------------------------------------------------------------------------
+Pattern Type: ASSIGNMENT_STATEMENT
+Input: A : = B/C - v -1q Xs
+Output: No
+Expected Value: No
+Time: 0m0.162s
+
+--------------------------------------------------------------------------------
+Pattern Type: ASSIGNMENT_STATEMENT
+Input: s[v,k+2] := 3 - arctan(sXzeta)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.030s
+
+--------------------------------------------------------------------------------
+Pattern Type: ASSIGNMENT_STATEMENT
+Input: V := Q> Y and Z comment issue with this statement; 
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: GOTO_STATEMENT
+Input: gotoHell
+Output: Yes
+Expected Value: Yes
+Time: 0m0.008s
+
+--------------------------------------------------------------------------------
+Pattern Type: GOTO_STATEMENT
+Input: go to 8
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: GOTO_STATEMENT
+Input: go to exit [n+1]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.007s
+
+--------------------------------------------------------------------------------
+Pattern Type: GOTO_STATEMENT
+Input: go to Town[if y<0 then N else N+1]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.007s
+
+--------------------------------------------------------------------------------
+Pattern Type: GOTO_STATEMENT
+Input: go to if Ab<c then 17 else q[if w < 0 then 2 else n]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.089s
+
+--------------------------------------------------------------------------------
+Pattern Type: DUMMY_STATEMENT
+Input: John:
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: DUMMY_STATEMENT
+Input: J8ohn:
+Output: Yes
+Expected Value: Yes
+Time: 0m0.120s
+
+--------------------------------------------------------------------------------
+Pattern Type: DUMMY_STATEMENT
+Input: 1J8ohn:
+Output: No
+Expected Value: No
+Time: 0m0.142s
+
+--------------------------------------------------------------------------------
+Pattern Type: DUMMY_STATEMENT
+Input: :
+Output: No
+Expected Value: No
+Time: 0m0.116s
+
+--------------------------------------------------------------------------------
+Pattern Type: CONDITIONAL_STATEMENT
+Input: if x > 0 then n:= n+1
+Output: Yes
+Expected Value: Yes
+Time: 0m0.008s
+
+--------------------------------------------------------------------------------
+Pattern Type: CONDITIONAL_STATEMENT
+Input: if v > u then V:q:=n+m else go to R
+Output: Yes
+Expected Value: Yes
+Time: 0m0.034s
+
+--------------------------------------------------------------------------------
+Pattern Type: CONDITIONAL_STATEMENT
+Input: 
+if s < 0 or P < = Q then AA:begin if q<v then a:= v/s
+   else y:=2Xa end
+   else if v>s then a:= v-q else if v > s-1
+   then go to S
+Output: Yes
+Expected Value: Yes
+Time: 0m7.964s
+
+--------------------------------------------------------------------------------
+Pattern Type: CONDITIONAL_STATEMENT
+Input: 
+if s < 0 or P < = Q then AA:begin if q<v then a:= v/s
+   else y:=:2Xa end
+   else if v>s then a:= v-q else if v > s-1
+   then go to S
+Output: No
+Expected Value: No
+Time: 0m0.124s
+
+--------------------------------------------------------------------------------
+Pattern Type: CONDITIONAL_STATEMENT
+Input: 
+if s < 0 or P < = Q then AA:begin if q<v then a:= v/s
+   else y:=2Xa end
+   else if v>:s then a:= v-q else if v > s-1
+   then go to S
+Output: No
+Expected Value: No
+Time: 0m0.146s
+
+--------------------------------------------------------------------------------
+Pattern Type: FOR_STATEMENT
+Input: for q : = 1 step s until n do A[q] := B[q]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.010s
+
+--------------------------------------------------------------------------------
+Pattern Type: FOR_STATEMENT
+Input: 
+for k:= 1, V1X2 while V1 < N do
+	for j:= 1+G, L, 1 step 1 until N, C+D do
+	A[k,j] := B[k,j]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.680s
+
+--------------------------------------------------------------------------------
+Pattern Type: FOR_STATEMENT
+Input: 
+for k:= 1, V1X2 while V1 < N do
+	for j:= 1+:G, L, 1 step 1 until N, C+D do
+	A[k,j] := B[k,j]
+Output: No
+Expected Value: No
+Time: 0m1.428s
+
+--------------------------------------------------------------------------------
+Pattern Type: FOR_STATEMENT
+Input: 
+for k:= 1, V1X2 while V1 < N do
+	for j:= 1+G, L, 1 ,step 1 until N, C+D do
+	A[k,j] := B[k,j]
+Output: No
+Expected Value: No
+Time: 0m0.389s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_STATEMENT
+Input: Spur (A)Order: (7)Result to:(V)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.007s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_STATEMENT
+Input: Transpose(W,v+1)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.007s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_STATEMENT
+Input: Absmax(A,N,M,yY,1,K)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.009s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_STATEMENT
+Input: Absmax(A,N,M,yY,1,K[])
+Output: No
+Expected Value: No
+Time: 0m0.126s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_STATEMENT
+Input: Innerproduct(A[t,P,u],B[P],10,P,Y)
+Output: Yes
+Expected Value: Yes
+Time: 0m0.007s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_STATEMENT
+Input: Innerproduct(A[A[t,P,u]A[t,P,u]t,P,u],B[P],10,P,Y)
+Output: No
+Expected Value: No
+Time: 0m0.118s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_STATEMENT
+Input: Innerproduct(A[t,P,u],B[P]1,10,P,Y)
+Output: No
+Expected Value: No
+Time: 0m0.141s
+
+--------------------------------------------------------------------------------
+Pattern Type: TYPE_DECLARATION
+Input: integer p,q,s
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: TYPE_DECLARATION
+Input: integer p,q,1
+Output: No
+Expected Value: No
+Time: 0m0.110s
+
+--------------------------------------------------------------------------------
+Pattern Type: TYPE_DECLARATION
+Input: own Boolean Acryl,n
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: TYPE_DECLARATION
+Input: own integer 9
+Output: No
+Expected Value: No
+Time: 0m0.168s
+
+--------------------------------------------------------------------------------
+Pattern Type: TYPE_DECLARATION
+Input: own Boolean Acryl,n+1
+Output: No
+Expected Value: No
+Time: 0m0.132s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARRAY_DECLARATION
+Input: array a,b,c[7:n,2:m], s[-2:10]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.013s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARRAY_DECLARATION
+Input: array a,b,c[7:n,2:m], s[-2:1j10]
+Output: No
+Expected Value: No
+Time: 0m0.134s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARRAY_DECLARATION
+Input: array a,b,c[7:n,2:m], s[-2:j,10]
+Output: No
+Expected Value: No
+Time: 0m0.120s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARRAY_DECLARATION
+Input: own integer array A[if c<0 then 2 else 1:20]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.013s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARRAY_DECLARATION
+Input: real array q[-7:-1]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.007s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARRAY_DECLARATION
+Input: array a,b,c[7:n,2:m,2:m,2:m,2:m,2:m,2:m], s[-2:10,-2:10,-2:10]
+Output: Yes
+Expected Value: Yes
+Time: 0m0.055s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARRAY_DECLARATION
+Input: array a,b,c[7:n,2:m,2:m,2:m,2:m,2:m,2:m], s[-2:10,-2:10,--2:10]
+Output: No
+Expected Value: No
+Time: 0m0.146s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARRAY_DECLARATION
+Input: array a,b,c[7:n,2:m,2:m,2:m,2:m,2:m,2:m], s[:10,-2:10,2:10]
+Output: No
+Expected Value: No
+Time: 0m0.112s
+
+--------------------------------------------------------------------------------
+Pattern Type: ARRAY_DECLARATION
+Input: array a,b,c[7:n,2:m,2:m,2:m,2:m,2:m,2:], s[9:10,-2:10,2:10]
+Output: No
+Expected Value: No
+Time: 0m0.123s
+
+--------------------------------------------------------------------------------
+Pattern Type: SWITCH_DECLARATION
+Input: switch Q:=p1,w
+Output: Yes
+Expected Value: Yes
+Time: 0m0.006s
+
+--------------------------------------------------------------------------------
+Pattern Type: SWITCH_DECLARATION
+Input: switch Q:=p1,w,1
+Output: Yes
+Expected Value: Yes
+Time: 0m0.137s
+
+--------------------------------------------------------------------------------
+Pattern Type: SWITCH_DECLARATION
+Input: switch Q:=p1,w-1,1
+Output: No
+Expected Value: No
+Time: 0m0.123s
+
+--------------------------------------------------------------------------------
+Pattern Type: SWITCH_DECLARATION
+Input: switch Q:=p1,w_1,1
+Output: No
+Expected Value: No
+Time: 0m0.119s
+
+--------------------------------------------------------------------------------
+Pattern Type: SWITCH_DECLARATION
+Input: switch Q:=f:=p1,w1,1
+Output: No
+Expected Value: No
+Time: 0m0.135s
+
+--------------------------------------------------------------------------------
+Pattern Type: SWITCH_DECLARATION
+Input: switch S:= S1,S2,Q[m], if v > -5 then S3 else S4
+Output: Yes
+Expected Value: Yes
+Time: 0m0.010s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+comment works;
+procedure p;
+begin
+   print(123, -10, +4.0);
+   outstring(1, 'hello\nhello\n')
+end
+Output: Yes
+Expected Value: Yes
+Time: 0m0.185s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+procedure p;
+begin
+   print(123, -10, +4.0);
+   outstring(1, 'hello\nhello\n');
+end
+Output: No
+Expected Value: No
+Time: 0m0.133s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+comment works;
+procedure p;
+begin integer i; comment this is a comment up top;
+
+      comment here is another comment;
+	  a:=4;
+      print( sum(i, 1, 100, 1/i), 6, 3 )
+end
+Output: Yes
+Expected Value: Yes
+Time: 0m0.165s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+procedure p;
+begin integer i; comment this is a comment up top;
+
+      comment here is another comment;
+	  a:=4;
+      print( ()sum(i, 1, 100, 1/i), 6, 3 )
+end
+Output: No
+Expected Value: No
+Time: 0m0.225s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+comment works;
+procedure p;
+begin integer i; comment this is a comment up top;
+
+      comment here is another comment;
+      real procedure sum(i, lo, hi, term);
+           value lo, hi; integer i, lo, hi; real term;
+           comment term is passed by-name;
+      begin real temp; temp := 0;
+            for i := lo step 1 until hi do
+               temp := temp + term;
+            sum := temp
+      end;
+
+      print( sum(i, 1, 100, 1/i), 6, 3 )
+end
+Output: Yes
+Expected Value: Yes
+Time: 0m0.489s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+begin integer i; comment this is a comment up top;
+
+      comment here is another comment;
+      real procedure sum(i, lo, hi, term);
+           value lo, hi; integer i, lo, hi; real term;
+           comment term is passed by-name;
+      begin real temp; temp := 0;
+            for i := lo step 1 until hi do
+               temp := temp + term;
+            sum := temp
+      end;
+
+      print( sum(i, 1, 100, 1/i), 6, 3 )
+end
+Output: No
+Expected Value: No
+Time: 0m0.721s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+Procedure i;begin integer i; comment this is a comment up top;
+
+      comment here is another comment;
+      real pocedure sum(i, lo, hi, term);
+           value lo, hi; integer i, lo, hi; real term;
+           comment term is passed by-name;
+      begin real temp; temp := 0;
+            for i := lo step 1 until hi do
+               temp := temp + term;
+            sum := temp
+      end;
+
+      print( sum(i, 1, 100, 1/i), 6, 3 )
+end
+Output: No
+Expected Value: No
+Time: 0m22.303s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+comment works;
+procedure Spur(a)Order:(n)Result:(s) ; value n ;
+array a ; integer n; real s ;
+begin integer k;
+s := 0 ;
+for k := 1 step 1 until n do s := s + a[k,k]
+end
+Output: Yes
+Expected Value: Yes
+Time: 0m0.288s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+procedure Spur(a)Order:(n)Result:(s) ; value n ;
+array a ; integer n; real s ;
+begin integer k;
+s := 0 ;
+for k := 1 stop 1 until n do s := s + a[k,k]
+end
+Output: No
+Expected Value: No
+Time: 0m0.437s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+procedure Spur(a)Order:(n)Result:(s) ; value n ;
+array a ; integer n; real s ;
+begin own integer k;
+s := 0 ;
+for k := 1 step 1 until n do s := s + a[k,k]
+end
+Output: Yes
+Expected Value: Yes
+Time: 0m0.337s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+procedure Spur(a)Order:(n)Result:(s) ; value n ;
+array a ; own integer n; real s ;
+begin own integer k;
+s := 0 ;
+for k := 1 step 1 until n do s := s + a[k,k]
+end
+Output: No
+Expected Value: No
+Time: 0m0.441s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+comment works;
+procedure Transpose(a)Order:(n); value n;
+array a; integer n;
+begin real w; integer i,k;
+for i:=1 step 1 until n do
+for k:= 1 +i step 1 until n do
+begin w:= a[i,k];
+a[i,k] := a[k,i];
+a[k,i]:=w
+end
+end 
+Output: Yes
+Expected Value: Yes
+Time: 0m0.594s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+comment works;
+procedure Transpose(a)Order:(n); value n;
+array a; integer n;
+begin real w; integer i,k;
+for i:=1 step 1 until n do
+for k:= 1 +i step 1 until n do
+begin w:= a[i,k]
+a[i,k] := a[k,i];
+a[k,i]:=w
+end
+end 
+Output: No
+Expected Value: No
+Time: 0m0.139s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+comment works;
+procedure innerproduct(a,b)Order:(k,p)Result:(y); value k;
+integer k,p ; real y,a,b; comment typo here for real y,a,b, ;
+begin real s ;
+s:=0;
+for p:=1 step 1 until k do s := s+aXb ;
+y:=s
+end
+Output: Yes
+Expected Value: Yes
+Time: 0m0.403s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+procedure innerproduct(a,b)Order:(k,p)Result:(y); value k;
+integer k,p ; real y,a,b; comment typo here for real y,a,b, ;
+begin real s ;
+s:=0
+for p:=1 step 1 until k do s := s+aXb ;
+y:=s
+end
+Output: No
+Expected Value: No
+Time: 0m0.515s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+comment works;
+integer procedure Step(u); real u;
+Step := if 0 <= u and u <= 1 then 1 else 0
+Output: Yes
+Expected Value: Yes
+Time: 0m0.127s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+own integer procedure Step(u); real u;
+Step := if 0 <= u and u <= 1 then 1 else 0
+Output: No
+Expected Value: No
+Time: 0m0.203s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+comment works;
+procedure Absmax(a)size:(n,m)Result:(y)Subscripts:(i,k);
+comment the absolute greatest element of the matrix a, of size n by m
+is transferred to y, and the subscripts of this element to i and k;
+array a; integer n,m,i,k; real y;
+begin integer p,q;
+y:=0;
+for p:= 1 step 1 until n do for q:=1 step 1 until m do
+if abs(a[p,q])>y then b:=1
+end
+Output: Yes
+Expected Value: Yes
+Time: 0m0.687s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+comment works;
+procedure Absmax(a)size:(n,m)Result:(y)Subscripts:(i,k);
+comment the absolute greatest element of the matrix a, of size n by m
+is transferred to y, and the subscripts of this element to i and k;
+array a; integer n,m,i,k; real y;
+begin integer p,q;
+y:=0;
+for p:= 1 step 1 until n do for q:=1 step 1 until m do
+if abs(a[p,q])>y then begin y:=abs(a[p,q]) ; i:=p ; k:=q
+end
+end
+Output: Yes
+Expected Value: Yes
+Time: 0m8.992s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+comment works;
+procedure p;
+begin
+  integer N;
+  Read Int(N);
+  begin
+    real array Data[1:N];
+    real sum, avg;
+    integer i;
+    sum:=0;
+    for i:=1 step 1 until N do
+      begin real val;
+        Read Real(val);
+        Data[i]:=if val<0 then -val else val
+      end
+    for i:=1 step 1 until N do
+     sum:=sum + Data[i];
+    avg:=sum/N;
+    Print Real(avg)
+  end
+end
+Output: Yes
+Expected Value: Yes
+Time: 0m7.954s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+procedure p;
+begin
+  integer N;
+  Read Int(N);
+  begin
+    real array Data[1:N];
+    real sum, avg;
+    integer i;
+    sum:=0;
+    for i:=1 step 1 until N do
+      begin real val;
+        Read Real(val);
+        Data[i]:=if val<0 then -val else val
+      end
+    for i:=1 step 1 until N do
+     sum:=sum + Data[i];
+    avg:=sum/N;
+    Print Real(avg)
+  end;
+end
+Output: No
+Expected Value: No
+Time: 1m36.316s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+procedure p;
+begin
+  integer N;
+  Read Int(N);
+  begin
+    real array Data[1:N];
+    real sum, avg;
+    integer i;
+    sum:=0;
+    for i:=1 step 1 until N do
+      begin real val;
+        Read Real(val);
+        Data[i]:=if val<0 then -val else val
+      end;
+    for i:=1 step 1 until N do
+     sum:=sum + Data[i];
+    avg:=sum/N;
+    Print Real(avg)
+  end
+end
+Output: No
+Expected Value: No
+Time: 0m3.831s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+procedure p;
+begin
+  integer N;
+  Read Int(N);
+  begin
+    real array Data[1:N];
+    real sum, avg;
+    integer i;
+    sum:=0;
+    for i:=1 step 1 until N do
+      begin real val;
+        Read Real(val);
+        Data[i]:=if val<0 then -val else val
+      end
+    for i:=1 step 1 until N do
+     sum:=sum + Data[i];
+    avg:=sum/N;
+    Print Real(avg);
+  end
+end
+Output: No
+Expected Value: No
+Time: 1m38.916s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+procedure p;
+begin
+  integer N;
+  Read Int(N);
+  begin
+    real array Data[1:N];
+    real sum, avg;
+    integer i;
+    sum:=0;
+    for i:=1 step 1 until N do
+      begin real val;
+        Read Real(val);
+        Data[i]:=if val<0 then -val else val;
+      end
+    for i:=1 step 1 until N do
+     sum:=sum + Data[i];
+    avg:=sum/N;
+    Print Real(avg)
+  end
+end
+Output: No
+Expected Value: No
+Time: 2m20.491s
+
+--------------------------------------------------------------------------------
+Pattern Type: PROCEDURE_DECLARATION
+Input:
+procedure p;
+begin
+  integer N;
+  Read Int(N);
+  begin
+    real array Data[1:N];
+    real sum, avg;
+    integer i;
+    sum:=0;
+    for i:=1 step 1 until N do
+      begin real val;
+        Read Real(val);
+        Data[i]:=if val<0 then -val else val
+      end
+    for i:=1 step 1 until N d
+     sum:=sum + Data[i];
+    avg:=sum/N;
+    Print Real(avg)
+  end
+end
+Output: No
+Expected Value: No
+Time: 2m6.408s
+
+--------------------------------------------------------------------------------
+
+IV.3 Operating Directions
+As stated in section I.1, the interpreter from the following link was
+compiled and used: ftp://ftp.ultimate.com/snobol/snobol4-1.1.tar.gz
+In most cases a line of sample input was put into a test file the file
+was redirected as standard input to snobol. Since the unit tests
+involved different patterns, the program was modified to use the
+corresponding pattern. For ease, there are ten files with sample
+procedure declaration input. The names of these files are
+"sample_program##.a60" and the range of ## is 01 - 10. The sourcecode
+for the program is contained in "algol_recognizer.sno".
+
+Example run:
+$snobol4 -b -S 10m -P 10m -d 10m algol_recognizer.sno < sample_program01.a60
+
+The example uses the following flags:
+-b disable banner
+-d increase size of dynamic region
+-P increase size of pattern match stack
+-S increase size of interpreter stack
+
+IV.4 Cautions
+Sometimes the program will take a long time for invalid input. Usually
+give a 5 minute window for a response. Otherwise terminate execution
+of the program. The program may give false negatives, but not false
+positives. 
+

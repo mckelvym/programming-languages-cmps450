@@ -1,0 +1,11 @@
+*	Test arbno ability
+	A = "a"
+	PATTERN = (A ARBNO(A)) . THE_MATCH
+	
+	LINE = INPUT
+	LINE PATTERN	:S(I_WIN)F(END_PROG)
+I_WIN	
+	OUTPUT = THE_MATCH
+END_PROG
+	OUTPUT = "End of Program"
+END

@@ -1,0 +1,8 @@
+comment works;
+procedure p;
+begin integer i; comment this is a comment up top;
+
+      comment here is another comment;
+	  a:=4;
+      print( sum(i, 1, 100, 1/i), 6, 3 )
+end

@@ -1,0 +1,15 @@
+*	LINE_COUNT.SNO
+*
+*	Counts the number of lines in a file
+*
+	COUNT =		0
+
+READLINE
+	LINE = INPUT :F(END_PROG)
+	COUNT = COUNT + 1
+	
+	'1' '1' :(READLINE)
+
+END_PROG
+	OUTPUT = "There are " COUNT " lines."
+END

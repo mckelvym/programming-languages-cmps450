@@ -1,0 +1,18 @@
+*	Remove whitespace and algol comments from a file
+* 	Whitespace includes space, tab, newline.
+	
+	WHITESPACE = " " | "	"
+	COMMENT = "comment"
+	END = "end"
+	SEMICOLON = ";"
+	END_COMMENT_PATTERN = (BREAK(END) | BREAK("else") | BREAK(SEMICOLON))
+
+REM	LINE COMMENT BREAK(SEMICOLON) SEMICOLON = 
+	LINE END END_COMMENT_PATTERN = END
+	LINE WHITESPACE =		:S(REM)
+	LINE = LINE INPUT		:S(REM)
+
+	LINE COMMENT RTAB(0) = 
+	OUTPUT = LINE
+
+END

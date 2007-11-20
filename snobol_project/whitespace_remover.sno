@@ -1,0 +1,12 @@
+*	Removes whitespace from a file
+* 	Whitespace includes space, tab, newline.
+	
+	WHITESPACE = " " | "	"
+	
+READ	LINE = LINE INPUT		:F(OUT)
+REM	LINE WHITESPACE =	:S(REM)
+	:(READ)
+OUT
+	OUTPUT = LINE
+
+END

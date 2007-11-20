@@ -1,0 +1,11 @@
+comment works;
+procedure Transpose(a)Order:(n); value n;
+array a; integer n;
+begin real w; integer i,k;
+for i:=1 step 1 until n do
+for k:= 1 +i step 1 until n do
+begin w:= a[i,k];
+a[i,k] := a[k,i];
+a[k,i]:=w
+end
+end 

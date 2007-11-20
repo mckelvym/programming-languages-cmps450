@@ -1,0 +1,181 @@
+II. Design Documentation
+
+II.1 System Architecture Description
+There is only one file containing all of the code for program. The
+program relies heavily on the use of Snobol's pattern matching
+ability. The Algol 60 BNFs are mimicked through the use of these
+patterns. The '*' operator is used to delay the evaluation of the
+patterns so that the stack does not overflow. In addition, the use of
+labels are used to generate loops. Based upon the success or failure
+of a pattern matching statement, the program may jump to another
+segment of code. 
+
+II.2 Information about the patterns
+Most of the patterns used in the assignment are taken directly from
+the Algol 60 report's BNFs and modified so that they work with the
+Snobol pattern type. Recursion is heavily used in the definition of
+the BNFs, but it is left recursive and often the BNFs state the base
+case before the recursive case. Because of this the patterns were
+made to used right recursion instead of left recursion and to state
+the base case as the last choice in a pattern. Some of the patterns
+were condensed as needed, and a few were expanded. This was done for
+two main reasons. To reduce redundancy and to increase readability of
+the program. Additionally, there are a few patterns do not come from
+the Algol 60 BNFs. The following examples show the reorganizing of the
+BNFs to better suit the pattern type:
+
+--------------------------------------------------------------------------------
+Comparison of assignment statements
+
+From Algol 60 report:
+
+<left part> ::= <variable> :=
+<left part list> ::= <left part>|<left part list><left part>
+<assignment statement> ::= <left part list><arithmetic expression>|
+		<left part list><boolean expression>
+
+From Snobol sourcecode:
+
+LEFT_PART_LIST = *VARIABLE ":=" *LEFT_PART_LIST | *VARIABLE ":="
+ASSIGNMENT_STATEMENT = *LEFT_PART_LIST (*ARITHMETIC_EXPRESSION | *BOOLEAN_EXPRESSION)
+
+In this example the <left part> was incorporated into the
+LEFT_PART_LIST. The LEFT_PART_LIST was rewritten to check for a
+variable paired with the ":=" operator paired with more of these
+statements. In the BNF, it is written with the base case first or
+choose a left recursive definition. My implementation uses a right
+recursive definition or choose the base case. 
+
+--------------------------------------------------------------------------------
+Comparison of variable statements
+
+From Algol 60 report:
+
+<variable identifier> ::= <identifier>
+<simple variable> ::= <variable identifier>
+<subscript expression> ::= <arithmetic expression>
+<subscript list> ::= <subscript expression>|<subscript list>,
+		<subscript expression>
+<array identifier> ::= <identifier>
+<subscripted variable> ::= <array identifier>[<subscript list>]
+<variable> ::= <simple variable>|<subscripted variable>
+
+From Snobol sourcecode:
+SUBSCRIPTS = (*UNSIGNED_NUMBER | *VARIABLE | *ARITHMETIC_EXPRESSION)
+		ARBNO("," *SUBSCRIPTS) 
+SUBSCRIPTED_VARIABLE = *IDENTIFIER "[" *SUBSCRIPTS "]"
+VARIABLE = *IDENTIFIER "[" *SUBSCRIPTS "]" | *IDENTIFIER
+
+The first thing to notice is the number of BNF statements compared to
+the number of pattern statements. The patterns are simplified versions
+of the BNFs and are also easier to read. The first, second, and last
+statements from the BNFs are a verbose way of saying that a variable
+can be an identifier, this is how it is implemented in the pattern as
+a base case. The third through sixth BNF statements are simply saying
+that a variable can also be an identifier with some comma separated
+list of numbers, variables, or arithmetic expressions enclosed in
+square brackets, and this is how it is implemented in the pattern
+statements. Through this simplification, most of the left recursion
+seen in the BNFs goes away. The simplification also makes the code
+easier to read. The only extra step needed is to make the pattern for
+a variable first look for a subscripted variable and then look for the
+base case of an identifier. 
+
+--------------------------------------------------------------------------------
+Example of added patterns
+
+NUMBER_OR_IDENTIFIER = *NUMBER | *IDENTIFIER
+SIMPLE_SUBSCRIPTS = NUMBER_OR_IDENTIFIER ARBNO("," *SIMPLE_SUBSCRIPTS)
+
+These patterns are defined and used for a simplification step in the
+program. They do not directly come from any of the Algol 60 BNFs but
+are just a subset used in easily identifying a certain type of
+variable that can be simplified.
+
+--------------------------------------------------------------------------------
+
+II.3 Information about the algorithm
+The first step in forming a solution to the problem is to read the
+Algol 60 report and become familiar with what actual code would look
+like. The next step would be to map the BNFs shown in the report to
+Snobol patterns. Starting with simple cases, it would be evident that
+a direct translation from BNF to pattern would yield bad results. The
+next step is to rewrite the patterns so that they are no longer
+looking for the base case first and no longer using left
+recursion. This step strikes are the heart of the algorithm and takes
+the most time to nail down. Once this step is complete, many examples
+of code can be tested against the patterns used. It is usually best to
+start small and check each type of pattern against valid input and see
+if the program validates it. The next step is to analyze each of the
+patterns to see how they can be simplified and not rely as heavily on
+recursion. The next thing to do is to simplify the input coming
+in. Since Algol 60 doesn't care about whitespace, all of it should be
+removed using the Snobol program. Next, comments can be removed, since
+they are not necessary for syntax checking. After that, a series of
+other simplifications can be made so that when the code is checked it
+will exit faster. Some examples of what I've done to simplify the code
+before checking it involve: 
+
+- Shortcut escaping - output "no" if a certain pattern that is not
+  valid and known is seen.
+- Convert uppercase characters to lowercase characters
+- Making multidigit numbers into a single digit .
+- Making subscripted variables into simple variables.
+- Shortening comma separated elements down to just two elements,
+  provided the elements are numbers or identifiers.
+- Shortening function designators separated by ":(" and ")" down to
+  something like "sin(a-b)", for example.
+- Simplifying the multiplication, division, addition, subtraction, and
+  exponentiation of two numbers down to a single digit.
+- Simplifying boolean expressions by removing "not" and changing all
+  "and" keywords to "or" keywords, this helps in the recursive
+  process.
+- Removing "for" statements when able to with a corresponding
+  assignment statement, since "for" statements can cause heavy
+  recursion. 
+
+The last step is use the topmost pattern to check the modified code to
+see if it makes sense syntactically. In this algorithm, it is assumed
+that a procedure declaration is the topmost element of the supplied
+Algol 60 code. Since there may be more than one procedure declaration
+in a file, this topmost pattern is used in a loop that continues to
+check for procedure declarations every time it finds one. After the
+program exits this loop it checks to make sure whether or not the
+patterns replaced all elements of the modified input with an arbitrary
+number of '*' characters. If it is has, then it believes that it has
+received syntactically correct Algol 60 code. If not then it makes
+some adjustments on how to check for an assignment statement and loops
+through again. If both of these steps fail the program outputs a
+message of "No", if one of these steps succeeds then the program
+outputs a message of "Yes". Otherwise the program may be stuck in a
+recursive loop due to bad input, in that case it is usually safe to
+assume and answer of "No".
+
+II.4 Example logic flow
+
+II.4.1 Outline of capability for first draft
+
+1. Define patterns
+2. Get input
+3. Remove all whitespace, comments
+4. Begin pattern matching loop for some group
+5. Check if code was replaced by all '*' characters
+6. Output a yes if code was replaced by all '*' characters
+7. Output a no if code was replaced by all '*' characters
+8. End
+
+II.4.1 Diagram of current (final) capability
+
+(Includes improved patterns)
+1. Define patterns
+2. Get input
+3. Remove all whitespace, comments
+4. Go through shortcut stage, and simplifying stage to clean up code
+5. Make a copy of cleaned up input
+6. Begin pattern matching for procedure declaration
+7. If unsuccessful redefine assignment statement and check again
+8. Check if code was replaced by all '*' characters
+9. Output a yes if code was replaced by all '*' characters
+10. Output a no if code was replaced by all '*' characters
+11. End
+

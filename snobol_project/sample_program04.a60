@@ -1,0 +1,7 @@
+comment works;
+procedure Spur(a)Order:(n)Result:(s) ; value n ;
+array a ; integer n; real s ;
+begin integer k;
+s := 0 ;
+for k := 1 step 1 until n do s := s + a[k,k]
+end

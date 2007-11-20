@@ -1,0 +1,3 @@
+comment works;
+integer procedure Step(u); real u;
+Step := if 0 <= u and u <= 1 then 1 else 0

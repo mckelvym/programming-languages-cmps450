@@ -1,0 +1,7 @@
+Q: begin integer i, k ; real w ;
+   for i := 1 step 1 until m do
+   for k := i+1 step 1 until m do
+   begin w := A[i,k] ; 
+   		 A[i,k] := A[k,i] ; 
+		 A[k,i] := w end for i and k
+end

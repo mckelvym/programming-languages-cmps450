@@ -1,0 +1,8 @@
+comment works;
+procedure innerproduct(a,b)Order:(k,p)Result:(y); value k;
+integer k,p ; real y,a,b; comment typo here for real y,a,b, ;
+begin real s ;
+s:=0;
+for p:=1 step 1 until k do s := s+aXb ;
+y:=s
+end

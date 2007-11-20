@@ -1,0 +1,6 @@
+comment works;
+procedure p;
+begin
+   print(123, -10, +4.0);
+   outstring(1, 'hello\nhello\n')
+end

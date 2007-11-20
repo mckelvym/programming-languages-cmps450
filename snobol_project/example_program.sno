@@ -1,0 +1,57 @@
+*	WORDSIZE.SNO
+*
+*	Program to read a file and display the number of words of
+*	various word lengths.  To make the program more interesting,
+*	we shall only consider word lengths between 3 and 9.  This allows
+*	us to demonstrate the use of an array with subscripts offset from
+*	1, as well as array failure.
+*
+*	The file being scanned is read from standard input.  For example,
+*	to scan the file TEXT.IN, type:
+*
+*		SNOBOL4 WORDSIZE <TEXT.IN
+*
+*	Trim trailing blanks from input
+*
+	&TRIM	=	1
+
+*	Define pattern for words.  A word consists of upper- and lower-case
+*	letters, apostrosphe and hyphen.
+*
+	WORDPAT	=	BREAK(&LCASE &UCASE) SPAN(&LCASE &UCASE "'-") . WORD
+
+*	Define the array to hold the word counts.  Valid subscripts must be
+*	in the range 3 through 9; all others will cause the array reference
+*	to fail.  Array elements are initialized to zero instead of the normal
+*	default, which is the null string.  This causes a zero to be produced
+*	in the printed output if a particular array entry is never incremented.
+*
+	COUNT	=	ARRAY('3:9',0)
+
+*	Read a line from the input file.  Fail if end-of-file.
+*
+READ	LINE	=	INPUT				:F(DONE)
+
+*	Find the next word in LINE, and remove it to WORD.  Fail when
+*	no more words remain in the line.
+*
+NEXTW	LINE WORDPAT =					:F(READ)
+
+*	Increment the appropriate array element for words of this
+*	size.  The statement quietly fails if the size is outside
+*	the range 3 through 9.
+*
+	COUNT<SIZE(WORD)> = COUNT<SIZE(WORD)> + 1	:(NEXTW)
+
+*	Upon end of file, print the values in the array.  Print heading first.
+*
+DONE	OUTPUT	=	"WORD LENGTH     NUMBER OF OCCURRENCES"
+	I	=	2
+
+*	Index through array starting at element 3.  When we reach element
+*	10, the array reference fails, and we fall through to END.
+*
+PRINT	I	=	I + 1
+	OUTPUT	=	LPAD(I,5) LPAD(COUNT<I>,20)	:S(PRINT)
+
+END
