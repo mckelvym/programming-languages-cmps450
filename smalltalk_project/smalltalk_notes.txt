@@ -1,0 +1,169 @@
+################################################################################
+Mark McKelvy
+CMPS450: Programming Languages
+################################################################################
+
+
+================================================================================
+[Smalltalk]
+
+Object Oriented Programming
+
+Object (Superclass)
+|
+food
+|          \				
+fruit       vegetable   (Subclasses)
+|      \          \    \
+apple   orange   carrot   beet
+           
+(Class names are always capitalized in SmallTalk)
+Object -> magnitude -> number -> integer
+	   	  			   		  -> float
+	   	  			   		  -> fraction     
+	   	  			   		  -> char 
+
+------------------------------
+Basic types
+- integers
+- floats
+- char
+  $a, $7
+- strings
+  '...'
+- arrays
+  #(    (   ))
+- symbols
+  #textwithnospaces
+- names
+  - instance variables:	begin with lowercase
+  - class names: 		begin with uppercase
+  - pseudo-variables
+  	- self, super, true, false, nil 
+
+------------------------------
+- 7 sign
+  + 
+- 7 factorial sqrt
+- 7 + 4  (3 objects; + goes into 7 and responds with something that
+  will accept an integer object, and the result is the object 11  
+- 7 + 17 sqrt  (sqrt is performed first; 17 sqrt is unary method,
+  while + 17 is binary method, and unary methods are performed before
+  binary methods) 
+- 7 max: 14
+- 7 between: 2 and: 24
+- Keyword messages are lower precedence
+- Binary/define messages
+- Unary messages are highest precedence
+
+------------------------------
+Boolean Class
+
+- Methods
+  - ifTrue: aBlock
+  - ifFalse: aBlock
+  - ifFalse: aBlock ifTrue: anotherBlock
+  - ifTrue: aBlock ifFalse: anotherBlock
+  - and: aBlock
+  - or: aBlock 
+  	- x > 0 ifFalse: [x <- x + 1] ifTrue: [x <- x- 1] 
+	- x <- x > 0 ifFalse: [x <- x + 1] ifTrue: [x <- x- 1] 
+	- i <- 1	                      
+	- [i <= 10] whileTrue: [i <- i + 1. i print]          (while loop)
+
+- Intervals
+  - Intervals respond to do:
+  - 1 to: 6	(generates 1 2 3 4 5 6)  
+  - (1 to: 6) do: [:x | x print]    (would print first 6 integers)
+
+------------------------------
+Classes
+
+- Class Stack Object theStack
+  - Class name super localobjects
+- Method Stack 'all'
+
+  	new
+		theStack <- List new
+	| 
+	push: anElement
+		theStack addFirst: anElement
+	|
+	top
+		^ theStack first 
+	|
+	pop
+		theStack removeFirst
+	|
+    isEmpty
+		^(theStack size) = 0
+    ]
+
+- myStack <- Stack new
+- Stack new; push: 2; push: 4; top
+ 
+To find what class an object is:
+
+> 'hey' class
+
+To find what methods a class has:
+
+> Integer methods
+
+To find what variables a class has:
+
+> String variables
+
+Assign a value to a variable:
+
+> face <- 'text'
+
+Create an empty 3 element array:
+
+> Array new: 3
+
+I think this will give you information about methods:
+
+>       True respondsTo display
+
+Saving a smalltalk image:
+
+>       smalltalk saveImage
+		Image name? newimage
+        image newimage created
+
+Making a new subclass?
+
+The the first argument is a symbol representing the
+name,  the  second  is  a string containing the names of any
+instance variables.
+
+>       Object addSubClass: #Foo instanceVariableNames: 'x y'
+
+Then use 
+
+ClassName addMethod 
+and 
+ClassName editMethod: methodName
+?
+
+Found out what Class a method belongs to:
+
+>       #+ respondsTo display
+
+Dump a class to a file:
+
+>       f <- File new
+>       f name: 'foo.st'
+>       f open: 'w'
+>       Foo fileOut: f
+>       Bar fileOut: f
+>       Object fileOutMethod: #isFoo to: f
+>       f close
+
+Read a class from a file:
+
+>       f <- File new
+>       f name: 'foo.st'
+>       f open: 'r'
+>       f fileIn

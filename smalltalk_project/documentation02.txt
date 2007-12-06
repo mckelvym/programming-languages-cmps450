@@ -1,0 +1,200 @@
+II. Design Documentation
+
+II.1 System Architecture Description
+The design of the simulated switch statement is encapsulated in a
+single object known as "CSwitch". The primary datatype that the
+CSwitch relies on is the Array to store information about the switch
+cases that it known about. Each case is a 3-element array consisting
+of a case number (or #default keyword), an associated block of code to
+execute with the case, and a Boolean value indicating whether or not
+the case contains a break statement or not. Each case array is
+contained within a larger array that contains all cases. Another
+datatype used is the Boolean value. In almost every method are
+if-statements to determine the correct course of action to
+take. Recursion is also used for falling through cases that do not
+contain break statements.
+
+II.2 Information about the objects
+Name: CSwitch
+Description: Simulated a c++-like switch statement by adding cases and
+executing them when provided a switch value.
+
+Class Attributes
+--------------------------------------------------------------------------------
+Name: cases
+Description: The list of switch cases.
+Type: Array of Arrays
+Range of acceptable values: Can be empty, upper limit on size is
+unknown. 
+
+Name: defaultIsSet
+Description: Helps identify if default case has been specified.
+Type: Boolean
+Range of acceptable values: true, false.
+
+Class Operations
+--------------------------------------------------------------------------------
+Prototype: new
+Description: Allocates memory for the switch object, gives initial
+values 
+Precondition(s): N/A
+Postcondition(s): cases is a new, empty Array; defaultIsSet is given
+the value false.
+Cost: O(1)
+
+Prototype: switchValue: value
+Description: Begins the runtime execution of the simulated switch
+statement.
+Precondition(s): value is an integer.
+Postcondition(s): Appropriate cases are executed if they have been
+defined.
+Cost: O(n^2)
+
+Prototype: fallThrough: value
+Description: Performs the fall through functionality of the switch
+statement when breaks are not used.
+Precondition(s): index is a positive integer or 0 and less than array
+size. 
+Postcondition(s): Appropriate cases are executed if they have been
+defined, terminates when no more cases are available.
+Cost: O(n)
+
+Prototype: forCase: value do: block
+Description: Adds a case without a break.
+Precondition(s): value is an integer, block is a Block that does not
+need values provided to it for it to execute properly. 
+Postcondition(s): If case does not exist it is added, if it does exist
+it is not added.
+Cost: O(n)
+
+Prototype: forBreakCase: value do: block
+Description: Adds a case with a break.
+Precondition(s): value is an integer, block is a Block that does not
+need values provided to it for it to execute properly. 
+Postcondition(s): If case does not exist it is added, if it does exist
+it is not added. 
+Cost: O(n)
+
+Prototype: forCase: value do: block withBreak: truthValue
+Description: Adds a case with or without a break.
+Precondition(s): value is an integer, block is a Block that does not
+need values provided to it for it to execute properly. truthValue is a
+Boolean. 
+Postcondition(s): If case does not exist it is added, if it does exist
+it is not added. The case will have a break specified if truthValue is
+true and not if otherwise.
+Cost: O(n)
+
+Prototype: default: block
+Description: Add a default case without break.
+Precondition(s): block is a Block that does not need values provided
+to it for it to execute properly and truthValue is a Boolean.
+Postcondition(s): block is added as a default case if there is none,
+and the user is prompted to overwrite the old default case if one
+already exists.
+Cost: O(1)
+
+Prototype: default: block withBreak: truthValue
+Description: Add a default case with or without break.
+Precondition(s): block is a Block that does not need values provided
+to it for it to execute properly and truthValue is a Boolean.
+Postcondition(s): block is added as a default case if there is not one
+already specified.
+Cost: O(1)
+
+Prototype: caseExists: value
+Description: Determine if a case already has been specified.
+Precondition(s): value is an integer and also less than or equal to
+the size of the array. 
+Postcondition(s): Returns a true or false if the case exists, or
+reports an error message if value was within an incorrect range.
+Cost: O(n)
+
+Prototype: defaultExists
+Description: Determine if the default case already has been
+specified. 
+Precondition(s): N/A
+Postcondition(s): Returns a true or false if the default case exists.
+Cost: O(1)
+
+Prototype: default
+Description: Get the default case.
+Precondition(s): The default case has been specified.
+Postcondition(s): Returns the case that is the default.
+Cost: O(n)
+
+Prototype: caseAt: value
+Description: Find a case in a specific array location.
+Precondition(s): value is a positive integer and also less than or
+equal to the size of the array. 
+Postcondition(s): Returns either an error if the value is out of range
+or the case corresponding to the array position specified.
+Cost: O(1)
+
+Prototype: show
+Description: Print a c++-like switch construct showing what cases have
+been defined.
+Precondition(s): N/A.
+Postcondition(s): Prints a c++-like switch construct showing what
+cases have been defined and returns itself as a message.
+Cost: O(n)
+
+II.3 Information about the algorithm
+The following is an overview of the algorithm used:
+
+- Create a new empty array to hold all cases supplied.
+
+- If user wants to print the array at any time, do it.
+
+- At any time let the user check if a case exists and/or has been
+  defined in the object.
+
+- At any time let the user specify a default case and if one has not
+  already been specified.
+
+- At any time let the user add new cases to the object provided they
+  do not clash with current cases. 
+
+- At any time let the user provide a switch value whether or not cases
+  have been made. Simply output a message if there are no cases
+  defined. If cases have been defined, the algorithm listed below will
+  suffice for executing the appropriate blocks of code. Multiple
+  switch values should not be a limitation. 
+
+Any time the user provides a switch value, use the following algorithm
+to determine what to do. Note: <value> is the value supplied by the
+user to the switch object.
+
+If <value> is a case that has not been defined, but a default case has
+been defined, then the default case will be executed and the output
+from the executed block will be printed in the interpreter. If a break
+does not exist in the default case then follow the rules below.
+
+For any case that has been defined the following applies:
+
+- Case <value> (or default case) at index <index> will be executed,
+  results will be printed in the interpreter. 
+
+- If current case has a break specified, execution of blocks will be
+  terminated.
+
+- If current case does not have a break specified, execution of the
+  code falls through to subsequent cases by incrementing <index> by
+  1. Refer to the start of the list.
+
+- If there are no more cases specified then the execution of blocks is
+  terminated.   
+
+II.4 Design Diagram
+
+II.4.1 Aggregation Diagram
+
+[ CSwitch ] --- 1:1 ---> [ Array ] --- 1:n ---> [ Array ]
+|  |
+|  |----------- 1:1 ---> [ Block ]
+|
+|-------------- 1:1 ---> [ Boolean ]
+
+
+
+

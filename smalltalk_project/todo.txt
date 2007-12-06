@@ -1,0 +1,29 @@
+- What data will be provided to the switch?
+       Case value - ex: 2
+       Case block - ex: ['hello world']
+       Case break - ex: true
+
+       Is it satisfactory to have the user
+       provide true or false to determine
+       if there should be a break?
+
+- What does it mean to "execute" a block? 
+       Return the block?
+
+       Make a statement with the block?
+       Ex: b <- ['hey']
+	   b.
+
+       Does it include using one of the
+       following methods?
+
+       value
+       forkWith:
+       fork
+       whileTrue
+       blockContext:
+       newProcess
+       whileTrue:
+       newProcessWith:  
+
+       value and print?

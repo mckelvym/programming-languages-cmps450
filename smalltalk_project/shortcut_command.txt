@@ -1,0 +1,3 @@
+Highlight so this can be inserted into smalltalk with ease:
+
+f <- File new. f name: 'CSwitch.st'; open: 'r'. f fileIn. s <- CSwitch new. editor <- 'emacs -nw'. CSwitch methods

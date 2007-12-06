@@ -1,0 +1,328 @@
+Class -------- CMPS450
+Section ------ 001
+Problem ------ Little Smalltalk Project
+Name --------- McKelvy, James Markus
+CLID --------- jmm0468
+Due Date ----- 10:15am December 6, 2007 (Thursday)
+
+
+I. Requirements Documentation
+
+I.1 Description of the Problem
+Name: Smalltalk Switch
+
+Problem Statement: A program is to be written in the Little Smalltalk
+language that will create a switch object that mimics the behavior a
+C++ switch statement. 
+
+Problem Specification: The implementation of the switch object
+requires the following attributes. The object should be able to be
+populated with cases, each providing a block of code to execute for
+the associated value and an optional break. This part will simulate
+the creation of the switch construct. Also, the object should be able
+to receive a switch value, which will in turn cause the object to
+execute the corresponding known case(s). The object should allow a
+default case to be specified. When the switch value is supplied to the
+object, it will simulate the runtime execution of a C++ switch. The
+object should be reusable in that once a switch value is provided and
+the appropriate code executed, the object is ready to receive another
+switch value and then execute that value's appropriate code, such as
+embedding the switch into a loop statement. 
+
+The Little Smalltalk version 3 interpreter present on the UCS systems
+was used for this project.
+
+I.2 Input Information
+All input is expected to come via messages to the switch object from
+the 'st' interpreter. In general, there are three main types of input
+that the object will expect to receive. The use of the "new" message
+is excluded from these types, but is required for the creation of a
+new switch object. The three types of input that the object will
+expect to receive:
+
+1. Input creating the characteristics of the switch object for later
+   use. 
+
+2. Input for "peeking" into the state of the switch object.
+
+3. Input for starting the "runtime execution" of the switch object,
+   which is the simulation of the c++-like switch structure.  
+
+I.2.1 Input to create the characteristics of the switch object.
+This assumes an object 's' has been created using the "new"
+method. The object may or may not have been populated with cases. The
+following is a list of methods for adding new cases to the object: 
+
+--------------------------------------------------------------------------------
+- forCase: <value> do: <block>
+
+Where <value> is an integer. This method will attempt to add <block>
+to the set of known cases. This case will not have a break. The case
+number is specified by <value>. 
+
+--------------------------------------------------------------------------------
+- forBreakCase: <value> do: <block>
+
+Where <value> is an integer. This method will attempt to add <block>
+to the set of known cases. This case will have a break. The case
+number is specified by <value>.  
+
+--------------------------------------------------------------------------------
+- forCase: <value> do: <block> withBreak: <boolean_value>
+
+Where <value> is an integer. This method will attempt to add <block>
+to the set of known cases. This case will have a break if
+<boolean_value> is true and will not have a break if <boolean_value>
+is false. The case number is specified by <value>. 
+
+--------------------------------------------------------------------------------
+- default: <block>
+
+This method will add <block> as the default case without a break.
+
+--------------------------------------------------------------------------------
+- default: <block> withBreak: <boolean_value>
+
+This method will add <block> as the default case with a break if
+<boolean_value> is true and without a break if <boolean_value> is
+false. 
+
+--------------------------------------------------------------------------------
+
+I.2.2 Input to determine the state of the switch object.
+This assumes an object 's' has been created using the "new"
+method. The object may or may not have been populated with cases. The
+following is a list of methods for seeing the state of the switch
+object and their explanation:
+
+--------------------------------------------------------------------------------
+- caseExists: <value>
+
+Where <value> is an integer. This method will report if a certain case
+has been input already. 
+
+--------------------------------------------------------------------------------
+- defaultExists
+
+This method will report if the default case has been input already.
+
+--------------------------------------------------------------------------------
+- show
+
+This method will show a c++-like switch statement the represents cases
+defined in the object.
+
+--------------------------------------------------------------------------------
+
+I.2.3 Input to start the simulated execution.
+This assumes an object 's' has been created using the "new"
+method. The object may or may not have been populated with
+cases. There is one method to start the execution of the simulated
+switch statement:
+
+--------------------------------------------------------------------------------
+- switchValue: <value>
+
+Where <value> is an integer. The object will search for
+case <value> and execute the corresponding block of code. Depending on
+previous input, more blocks of code may be executed at this time.
+
+--------------------------------------------------------------------------------
+
+I.3 Output Information
+All output is either printed through the Smalltalk interpreter or sent
+via a message in the Smalltalk interpreter. In this section, the
+expected type of output for the state of the program given the method
+called will be described, however the verification and testing will be
+done in a later section. For each of the following methods:
+
+- forCase: <value> do: <block>
+- forBreakCase: <value> do: <block>
+- forCase: <value> do: <block> withBreak: <boolean_value>
+- default: <block>
+- default: <block> withBreak: <boolean_value>
+- caseExists: <value>
+- defaultExists
+- show
+- switchValue: <value>
+
+the expected output is described.
+
+--------------------------------------------------------------------------------
+- forCase: <value> do: <block>
+
+If case <value> does not currently exist and <block> is a valid object
+of type Block, a case will be added to the switch object that does not
+have a break specified. A message will respond with "Case # added.",
+with # being replaced with the value supplied.
+
+If case <value> does currently exist and <block> is a valid object of
+type Block, the object will respond with a message "Error: case #
+already exists.", with # being replaced with the value supplied.
+
+For invalid input of <value> or <block> then either the program or the
+interpreter will respond with a message indicating the input was
+invalid.
+
+--------------------------------------------------------------------------------
+- forBreakCase: <value> do: <block>
+
+If case <value> does not currently exist and <block> is a valid object
+of type Block, a case will be added to the switch object that does 
+have a break specified. A message will respond with "Case # added.",
+with # being replaced with the value supplied.
+
+If case <value> does currently exist and <block> is a valid object of
+type Block, the object will respond with a message "Error: case #
+already exists.", with # being replaced with the value supplied.
+
+For invalid input of <value> or <block> then either the program or the
+interpreter will respond with a message indicating the input was
+invalid.
+
+--------------------------------------------------------------------------------
+- forCase: <value> do: <block> withBreak: <boolean_value>
+
+If case <value> does not currently exist and <block> is a valid object
+of type Block, a case will be added to the switch object that has a
+break associated with it if <boolean_value> is true and does not have
+a break associated with it if <boolean_value> is false. A message will
+respond with "Case # added.", with # being replaced with the value
+supplied. 
+
+If case <value> does currently exist and <block> is a valid object of
+type Block, the object will respond with a message "Error: case #
+already exists.", with # being replaced with the value supplied.
+
+For invalid input of <value> or <block> or <boolean_value> then either
+the program or the interpreter will respond with a message indicating
+the input was invalid.
+
+--------------------------------------------------------------------------------
+- default: <block>
+
+If the default case does not currently exist, then <block> will now be
+the default case added to the switch object without a break
+specified. The object will respond with the message of "Default case
+added." provided that <block> is not invalid. 
+
+--------------------------------------------------------------------------------
+- default: <block> withBreak: <boolean_value>
+
+If the default case does not currently exist, then <block> will now be
+the default case added to the switch object with or without a break
+specified depending on the value of <boolean_value>. The object will
+respond with the message of "Default case added." provided that
+<block> is not invalid. 
+
+--------------------------------------------------------------------------------
+- caseExists: <value>
+
+If case <value> exists then a message of 'true' will be the
+response. If case <value> does not exist then a message of 'false'
+will be the response. If the input for <value> was invalid then the
+program will respond with a message indicating that the input was
+invalid. 
+
+--------------------------------------------------------------------------------
+- defaultExists
+
+If the default case exists then a message of 'true' will be the
+response. If the default case does not exist then a message of 'false'
+will be the response. 
+
+--------------------------------------------------------------------------------
+- show
+
+This will cause the object to print a representation of the cases that
+have been defined. For example, if two numbered cases have been
+defined along with a default case, the input may look like the following:
+
+switch(someValue)
+{
+  case 9:
+    Block;
+	break;
+  default:
+    Block;
+  case 4:
+    Block;
+}
+
+If there have been no cases defined the input will look like the
+following: 
+
+switch(someValue)
+{
+}
+
+This method will return a message containing the switch object.
+
+--------------------------------------------------------------------------------
+- switchValue: <value>
+
+This will cause the object to execute cases that have been added to
+the object. If <value> is invalid, then the program will respond with
+a message indicating this.
+
+If there have been no cases defined yet (numbered or default) then the
+program will respond with the following message:
+
+No cases to execute.
+
+If <value> is a case that has not been defined and a default case has
+also not been defined, then the following message will be printed in
+the interpreter:
+
+No case by that value, no default to execute.
+
+If <value> is a case that has not been defined, but a default case has
+been defined, then the default case will be executed and the output
+from the executed block will be printed in the interpreter. If a break
+does not exist in the default case then follow the rules below.
+
+For any case that has been defined the following applies:
+
+- Case <value> (or default case) at index <index> will be executed,
+  results will be printed in the interpreter. 
+
+- If current case has a break specified, execution of blocks will be
+  terminated.
+
+- If current case does not have a break specified, execution of the
+  code falls through to subsequent cases by incrementing <index> by
+  1. Refer to the start of the list.
+
+- If there are no more cases specified then the execution of blocks is
+  terminated.   
+
+--------------------------------------------------------------------------------
+
+I.4 User Interface Information
+The way that the user interfaces with the program is through the
+Little Smalltalk interpreter using the Little Smalltalk language
+mechanisms. 
+
+There are no prompts in the program.
+
+The possible error messages that may be shown include the following: 
+
+- "Error: value must be an integer."
+
+- "Error: value out of index range."
+
+- "Error: case value must be an integer."
+
+- "Error: withBreak value must be Boolean."
+
+- "Error: case # already exists."
+
+- "Error: Default case exists."
+
+- "Error: No default case defined."
+
+- "Error: value is greater than the number of cases."
+
+Normal output from the program is described in the previous section
+"I.3 Output Information" and will not be replicated here.
+

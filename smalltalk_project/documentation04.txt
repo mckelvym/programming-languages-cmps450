@@ -1,0 +1,867 @@
+IV. Verification and Validation Documentation
+
+IV.1 Test Plan
+Go through possible states and method calls that can be performed on
+the CSwitch object to see how it behaves in various
+circumstances. Move on to applying switch statements to use in the
+object and verify that the behavior seen is expected. 
+
+IV.2 Test Results
+Each of the tests below are intended to test the basic components of
+the object so that all of the tests will build confidence in the
+ability of it to function as desired. For each test case, the state of
+the object is defined and the associated messages to give the object
+that state are shown. Each test is designed to check the behavior of
+one or several similar methods. After each test, There is a statement
+of whether or not the test produced the expected behavior.
+
+--------------------------------------------------------------------------------
+New switch object, no cases defined. What is the behavior of the
+following method: 'show'?
+
+>       s <- CSwitch new
+CSwitch
+>       s show
+
+switch(someValue)
+{
+}
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, no cases defined. What is the behavior of the
+following method: 'defaultExists'?
+
+>       s <- CSwitch new
+CSwitch
+>       s defaultExists
+false
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, no cases defined. What is the behavior of the
+following method: 'caseExists' with various input values?
+
+>       s <- CSwitch new
+CSwitch
+
+>       s caseExists: -1
+false
+
+Is this the expected behavior? Yes
+
+>       s caseExists: 0
+false
+
+Is this the expected behavior? Yes
+
+>       s caseExists: 3
+false
+
+Is this the expected behavior? Yes
+
+>       s caseExists: 99b
+not recognized Integer #b
+Process trace ( Process)
+Smalltalk error: ( Smalltalk String)
+...
+
+Is this the expected behavior? Yes, internally the program is checking
+for the input to be an integer by "casting" it.
+
+>       s caseExists: '4'
+Error: value must be an integer.
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, no cases defined. What is the behavior of the
+following method: 'switchValue' with different input values?
+
+>       s <- CSwitch new
+CSwitch
+>       s switchValue: -1
+No cases to execute.
+
+Is this the expected behavior? Yes
+
+>       s switchValue: 0
+No cases to execute.
+
+Is this the expected behavior? Yes
+
+>       s switchValue: 99
+No cases to execute.
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, no cases defined. What is the behavior of the
+following method: 'forCase:do:' with different input values?
+
+>       s <- CSwitch new
+CSwitch
+>       s forCase: -1 do: ['hey there']
+Case -1 added.
+
+Is this the expected behavior? Yes
+
+>       s <- CSwitch new
+CSwitch
+>       s forCase: 'b' do: ['hey there']
+Error: case value must be an integer.
+
+Is this the expected behavior? Yes
+
+>       s <- CSwitch new
+CSwitch
+>       s forCase: 4 do: ['hey']
+Case 4 added.
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, no cases defined. What is the behavior of the
+following method: 'forBreakCase:do:' with different input values?
+
+>       s <- CSwitch new
+CSwitch
+>       s forBreakCase: -1 do: ['hey there']
+Case -1 added.
+
+Is this the expected behavior? Yes
+
+>       s <- CSwitch new
+CSwitch
+>       s forBreakCase: 'b' do: ['hey there']
+Error: case value must be an integer.
+
+Is this the expected behavior? Yes
+
+>       s <- CSwitch new
+CSwitch
+>       s forBreakCase: 3 do: ['hello']
+Case 3 added.
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, no cases defined. What is the behavior of the
+following method: 'forCase:do:withBreak:' with different input values?
+
+>       s <- CSwitch new
+CSwitch
+>       s forCase: 5 do: ['nothing'] withBreak: true
+Case 5 added.
+
+Is this the expected behavior? Yes
+
+>       s <- CSwitch new
+CSwitch
+>       s forCase: 4 do: ['something'] withBreak: false
+Case 4 added.
+
+Is this the expected behavior? Yes
+
+>       s <- CSwitch new
+CSwitch
+>       s forCase: 3 do: ['notta'] withBreak: 1
+Error: withBreak value must be Boolean.
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, no cases defined. What is the behavior of the
+following method: 'default:'?
+
+>       s <- CSwitch new
+CSwitch
+>       s default: [8*9]
+Default case added.
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, no cases defined. What is the behavior of the
+following method: 'default:withBreak:'?
+
+>       s <- CSwitch new
+CSwitch
+>       s default: [a+b] withBreak: true
+Default case added.
+
+Is this the expected behavior? Yes
+
+>       s <- CSwitch new
+CSwitch
+>       s default: [c + d] withBreak: 1
+Error: withBreak value must be Boolean.
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is defined. What is the behavior of
+the following method: 'show'?
+
+>       s <- CSwitch new; default: ['battles']
+Default case added.
+>       s show
+
+switch(someValue)
+{
+  default:
+    Block;
+}
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is defined. What is the behavior of
+the following method: 'defaultExists'?
+
+>       s <- CSwitch new; default: ['battles']
+Default case added.
+>       s defaultExists
+true
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is defined. What is the behavior of
+the following method: 'caseExists' with various input values?
+
+>       s <- CSwitch new; default: ['battles']
+Default case added.
+
+>       s caseExists: -1
+false
+
+Is this the expected behavior? Yes
+
+>       s caseExists: 0
+false
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is defined. What is the behavior of
+the following method: 'switchValue' with different input values?
+
+>       s <- CSwitch new; default: ['battles']
+Default case added.
+>       s switchValue: -1
+battles
+
+Is this the expected behavior? Yes
+
+>       s switchValue: 0
+battles
+
+Is this the expected behavior? Yes
+
+>       s switchValue: 99
+battles
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is defined. What is the behavior of
+the following method: 'forCase:do:' with different input values?
+
+>       s <- CSwitch new; default: ['battles']
+Default case added.
+>       s forCase: 2 do: ['go']
+Case 2 added.
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is defined. What is the behavior of
+the following method: 'forBreakCase:do:' with different input values?
+
+>       s <- CSwitch new; default: ['battles']
+Default case added.
+>       s forBreakCase: 0 do: ['fun']
+Case 0 added.
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is defined. What is the behavior of
+the following method: 'forCase:do:withBreak:' with different input
+values? 
+
+>       s <- CSwitch new; default: ['battles']
+Default case added.
+>       s forCase: 90 do: ['absolutely nothing'] withBreak: true
+Case 90 added.
+
+Is this the expected behavior? Yes
+
+>       s <- CSwitch new; default: ['battles']
+Default case added.
+>       s forCase: 89 do: ['maybe sometihng'] withBreak: false
+Case 89 added.
+
+Is this the expected behavior? Yes
+
+>       s <- CSwitch new; default: ['battles']
+Default case added.
+>       s forCase: 88 do: ['blah'] withBreak: 'true'
+Error: withBreak value must be Boolean.
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is defined. What is the behavior of
+the following method: 'default:'?
+
+>       s <- CSwitch new; default: ['battles']
+Default case added.
+>       s default: ['something new']
+Error: Default case exists.
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is defined. What is the behavior of
+the following method: 'default:withBreak:'?
+
+>       s <- CSwitch new; default: ['battles']
+Default case added.
+>       s default: ['something new'] withBreak: false
+Error: Default case exists.
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is undefined, two numbered cases are
+defined. What is the behavior of the following method: 'show'?
+
+>       s <- CSwitch new; forCase: 3 do: ['apples']; forCase: 2 do:
+['bananas'] withBreak: true
+Case 3 added.
+Case 2 added.
+CSwitch
+>       s show
+
+switch(someValue)
+{
+  case 3:
+    Block;
+  case 2:
+    Block;
+    break;
+}
+CSwitch
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is undefined, two numbered cases are
+defined. What is the behavior of the following method:
+'defaultExists'? 
+
+>       s <- CSwitch new; forCase: 3 do: ['apples']; forCase: 2 do:
+['bananas'] withBreak: true
+Case 3 added.
+Case 2 added.
+CSwitch
+>       s defaultExists
+false
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is undefined, two numbered cases are
+defined. What is the behavior of the following method: 'caseExists'
+with different input values? 
+
+>       s <- CSwitch new; forCase: 3 do: ['apples']; forCase: 2 do:
+['bananas'] withBreak: true
+Case 3 added.
+Case 2 added.
+CSwitch
+
+>       s caseExists: 0
+false
+
+>       s caseExists: 2
+true
+
+>       s caseExists: 3
+true
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is undefined, two numbered cases are
+defined. What is the behavior of the following method: 'switchValue'
+with different input values? 
+
+>       s <- CSwitch new; forCase: 3 do: ['apples']; forCase: 2 do:
+['bananas'] withBreak: true
+Case 3 added.
+Case 2 added.
+CSwitch
+
+>       s switchValue: -1
+No case by that value, no default to execute.
+
+>       s switchValue: 0
+No case by that value, no default to execute.
+
+>       s switchValue: 2
+bananas
+
+>       s switchValue: 3
+apples
+bananas
+
+>       s switchValue: 'b'
+Error: value must be an integer.
+
+>       s switchValue: 99
+No case by that value, no default to execute.
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is undefined, two numbered cases are
+defined. What is the behavior of the following method: 'forCase:do:'
+with different input values? 
+
+(This time, testing of 'forBreakCase:do:' and 'forCase:do:withBreak:'
+will be skipped since all three methods use 'forCase:do:withBreak:' by
+passing it different messages.)
+
+>       s <- CSwitch new; forCase: 3 do: ['apples']; forCase: 2 do:
+['bananas'] withBreak: true
+Case 3 added.
+Case 2 added.
+CSwitch
+
+>       s forCase: 1 do: ['go']
+Case 1 added.
+CSwitch
+
+>       s forCase: 2 do: ['change me']
+Error: case 2 already exists.
+
+>       s forCase: 3 do: [a+b+c+d]
+Error: case 3 already exists.
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is undefined, two numbered cases are
+defined. What is the behavior of the following method:
+'default:withBreak:'? 
+
+(Since 'default:' simple calls 'default:withBreak:' only the latter
+will be used.)
+
+>       s <- CSwitch new; forCase: 3 do: ['apples']; forCase: 2 do:
+['bananas'] withBreak: true
+Case 3 added.
+Case 2 added.
+CSwitch
+>       s default: [apples+oranges] withBreak: true
+Default case added.
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is defined, two numbered cases are
+defined. What is the behavior of the following method: 'show'?
+
+>       s <- CSwitch new; forCase: 5 do: [1+3. 1+4]; default: [8*0];
+forCase: 3 do: [7-4] withBreak: true
+Case 5 added.
+Default case added.
+Case 3 added.
+>       s show
+
+switch(someValue)
+{
+  case 5:
+    Block;
+  default:
+    Block;
+  case 3:
+    Block;
+    break;
+}
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is defined, two numbered cases are
+defined. What is the behavior of the following method:
+'defaultExists'? 
+
+>       s <- CSwitch new; forCase: 5 do: [1+3. 1+4]; default: [8*0];
+forCase: 3 do: [7-4] withBreak: true
+Case 5 added.
+Default case added.
+Case 3 added.
+>       s defaultExists
+true
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is defined, two numbered cases are
+defined. What is the behavior of the following method: 'caseExists'
+with different input values? 
+
+>       s <- CSwitch new; forCase: 5 do: [1+3. 1+4]; default: [8*0];
+forCase: 3 do: [7-4] withBreak: true
+Case 5 added.
+Default case added.
+Case 3 added.
+
+>       s caseExists: 0
+false
+
+>       s caseExists: 5
+true
+
+>       s caseExists: 3
+true
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is defined, two numbered cases are
+defined. What is the behavior of the following method: 'switchValue'
+with different input values? 
+
+>       s <- CSwitch new; forCase: 5 do: [1+3. 1+4]; default: [8*0];
+forCase: 3 do: [7-4] withBreak: true
+Case 5 added.
+Default case added.
+Case 3 added.
+
+>       s switchValue: 2
+0
+3
+
+Is this the expected behavior? Yes
+
+>       s switchValue: 3
+3
+
+Is this the expected behavior? Yes
+
+>       s switchValue: 4
+0
+3
+
+Is this the expected behavior? Yes
+
+>       s switchValue: 5
+5
+0
+3
+
+Is this the expected behavior? Yes
+
+>       s switchValue: 6
+0
+3
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+New switch object, default case is defined, two numbered cases are
+defined. What is the behavior of the following method: 'forCase:do:'
+with different input values? 
+
+(This time, testing of 'forBreakCase:do:' and 'forCase:do:withBreak:'
+will be skipped since all three methods use 'forCase:do:withBreak:' by
+passing it different messages.)
+
+>       s <- CSwitch new; forCase: 5 do: [1+3. 1+4]; default: [8*0];
+forCase: 3 do: [7-4] withBreak: true
+Case 5 added.
+Default case added.
+Case 3 added.
+
+>       s forCase: 4 do: ['i am four']
+Case 4 added.
+
+>       s forCase: 4 do: ['me too']
+Error: case 4 already exists.
+
+>       s forCase: 3 do: ['can i be three']
+Error: case 3 already exists.
+
+>       s forCase: 5 do: ['how about five']
+Error: case 5 already exists.
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+Create a new switch object and populate it with cases. Show the output
+of the what the switch statement would look like. Provide switch
+values to the switch statement and verify that the results seen are
+expected. 
+
+>       s <- CSwitch new; forCase: 1 do: [1]; forCase: 2 do: [2];
+default: ['default']; forCase: -3 do: [-3]; show;
+Case 1 added.
+Case 2 added.
+Default case added.
+Case -3 added.
+
+switch(someValue)
+{
+  case 1:
+    Block;
+  case 2:
+    Block;
+  default:
+    Block;
+  case -3:
+    Block;
+}
+
+>       s switchValue: 1
+1
+2
+default
+-3
+
+>       s switchValue: 2
+2
+default
+-3
+
+>       s switchValue: -3
+-3
+
+>       s switchValue: 0
+default
+-3
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+Create a new switch object and populate it with cases. Show the output
+of the what the switch statement would look like. Provide switch
+values to the switch statement and verify that the results seen are
+expected. 
+
+>       s <- CSwitch new; forCase: 1 do: [1]; forCase: 2 do: [2];
+default: ['default']; forBreakCase: -3 do: [-3]; forCase: -4 do: [-4];
+show;
+Case 1 added.
+Case 2 added.
+Default case added.
+Case -3 added.
+Case -4 added.
+
+switch(someValue)
+{
+  case 1:
+    Block;
+  case 2:
+    Block;
+  default:
+    Block;
+  case -3:
+    Block;
+    break;
+  case -4:
+    Block;
+}
+
+>       s switchValue: 1
+1
+2
+default
+-3
+
+>       s switchValue: 0
+default
+-3
+
+>       s switchValue: -4
+-4
+
+>       s switchValue: -3
+-3
+
+>       s switchValue: 2
+2
+default
+-3
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+Create a new switch object and populate it with cases. Show the output
+of the what the switch statement would look like. Provide switch
+values to the switch statement and verify that the results seen are
+expected. 
+
+>       s <- CSwitch new; forCase: 5 do: [5]; forCase: 2 do: [2];
+default: ['default'] withBreak: true; forCase: -4 do: [-4]; show;
+Case 5 added.
+Case 2 added.
+Default case added.
+Case -4 added.
+
+switch(someValue)
+{
+  case 5:
+    Block;
+  case 2:
+    Block;
+  default:
+    Block;
+    break;
+  case -4:
+    Block;
+}
+
+>       s switchValue: 5
+5
+2
+default
+
+>       s switchValue: 4
+default
+
+>       s switchValue: 2
+2
+default
+
+>       s switchValue: -4
+-4
+
+>       s switchValue: 0
+default
+
+>       s switchValue: 99
+default
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+Create a new switch object and populate it with cases. Show the output
+of the what the switch statement would look like. Provide switch
+values to the switch statement and verify that the results seen are
+expected. 
+
+>       s <- CSwitch new
+CSwitch
+>       s forCase: 0 do: [i<-i+1]
+Case 0 added.
+>       s forCase: 1 do: [i<-i+2]
+Case 1 added.
+>       s forCase: 2 do: [i<-i+3]
+Case 2 added.
+>       s forCase: 5 do: [i<-i+5]
+Case 5 added.
+>       s forBreakCase: 6 do: [i<-i+10]
+Case 6 added.
+>       s forCase: 9 do: [i<--4]
+Case 9 added.
+>       s default: [i<-i-20]
+Default case added.
+>       s show
+
+switch(someValue)
+{
+  case 0:
+    Block;
+  case 1:
+    Block;
+  case 2:
+    Block;
+  case 5:
+    Block;
+  case 6:
+    Block;
+    break;
+  case 9:
+    Block;
+  default:
+    Block;
+}
+
+Is this the expected behavior? Yes
+
+>       i<-1
+1
+>       s switchValue: 0
+2
+4
+7
+12
+22
+
+Is this the expected behavior? Yes
+
+>       i<-1
+1
+>       s switchValue: 1
+3
+6
+11
+21
+
+Is this the expected behavior? Yes
+
+>       i <- 1
+1
+>       s switchValue: 6
+11
+
+
+>       s switchValue: 9
+-4
+-24
+
+>       s switchValue: -1
+-19
+
+Is this the expected behavior? Yes
+
+--------------------------------------------------------------------------------
+
+IV.3 Operating Directions
+Invoke the Little Smalltalk interpreter on the UCS systems with the
+command 'st'. Make sure that the file "CSwitch.st" is in the same
+directory that you have invoked the interpreter. 
+
+Within the interpreter, the following commands can be used to load the
+CSwitch object into the interpreter:
+
+> f <- File new. f name: 'CSwitch.st'; open: 'r'. f fileIn. 
+
+Then create an instance of the CSwitch object by doing the following:
+> s <- CSwitch new
+
+At this point the user is free to do as he/she likes with the object
+provided that it is kept in mind that the following methods are the
+only methods meant to be used from the CSwitch object:
+
+- switchValue:
+- forCase:do:
+- forBreakCase:do:
+- forCase:do:withBreak:
+- default:
+- default:withBreak:
+- caseExists:
+- defaultExists
+- show
+
+IV.4 Cautions
+Using CSWitch methods other those listed above may lead to
+unpredictable behavior of the CSwitch object.
+

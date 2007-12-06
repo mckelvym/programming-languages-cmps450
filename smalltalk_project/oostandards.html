@@ -1,0 +1,300 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD><TITLE>O-O Documentation Standards Home Page</TITLE>
+<META content="text/html; charset=windows-1252" http-equiv=Content-Type>
+<META content="MSHTML 5.00.2314.1000" name=GENERATOR></HEAD>
+<BODY bgColor=#ffffff>
+<H2>Programming Documentation Standard <BR>Object-Oriented Version, January 2000</H2>
+<P><B>A. Introduction</B></P>
+<P>A.1 Purpose of this Document</P>
+<P>This document describes a standard documentation format for programming work 
+done in computer science courses. The intent is for the students to gain 
+experience with standard documentation techniques, to improve the quality of 
+programming work, and to facilitate the grading of students' work. </P>
+<P>A.2 Organization of the Standard Description </P>
+<P>This standard encompasses both physical and logical aspects of the 
+documentation. Certain materials described herein are to be assembled in a 
+prescribed manner to form the documentation package which will be submitted and 
+graded in fulfillment of the requirements for the programming assignment. These 
+materials also constitute a logical structure which guides the students' efforts 
+from problem definition through solution and implementation to program 
+verification and culmination of the programming effort. The following sections 
+on content materials and packaging will explain both the physical and logical 
+aspects, as well as the relationship between them. </P>
+<P>A.3 Content of the Documentation </P>
+<P>The materials comprising the documentation cover the four phases of problem 
+solution - analysis, design, coding and testing. In the analysis phase, the 
+problem is defined and the requirements documentation is produced. In the design 
+phase, a software solution to the problem is planned, organized and detailed to 
+produce the design documentation. During the coding phase the design is 
+converted to program code which, together with appropriate comments, becomes the 
+implementation documentation. In the testing phase, the program is run to test 
+whether it accurately produces the results specified in the problem definition. 
+Difficulties encountered in the test runs are removed through debugging and 
+making needed corrections. Test data and final test results are recorded in the 
+verification and validation documentation. </P>
+<P><B>B. Physical Aspects of the Documentation</B></P>
+<P>B.1 Three Types of Materials Used in the Documentation:</P>
+<P><I>Enclosure:</I> A letter size manila folder without pockets should be sufficient
+to contain all of the material.  On the tab of the manila folder place the 
+following information: Course No., Section No., Problem No., Student Name (Last, 
+Initials), CLID, and Due Date. For example, <BR><BR><PRE>CS 260             Sec. 1        Prob. # 2
+<BR>Smith, James C.    jcs3233       Submitted: 2/5/00</PRE>
+<P></P>
+<P><I>Written material:</I> Written material should be printed on 8-1/2 x 11 
+inch sheets of paper.  Do <b>NOT</b> staple sheets. 
+Sheets should be numbered.  You should use a word processor to write your requirements and design 
+documentation. These documents can then be easily moved into the code as 
+comments. This will also allow you to build the code around your design. </P>
+<P>The first information that should appear at the top of the first page is the 
+information that identifies the programmer. Include the same information here 
+that you did on the outside of the folder, as described under <I>Enclosure</I>.
+Each source file also must include the same information.
+</P>
+<P><I>Computer Printout: </I>A copy of the source code, makefile,  and a copy of script 
+files showing test results should be included. The code and test results must 
+also be trimmed to 8.5 11 and separated. <EM>Note: the code goes into part III 
+and the test results and makefile into part IV of your documentation package. </EM></P>
+<P>B.2 Grading Notes </P>
+<P>Folders are due at the beginning of the class period of the 
+due date and submissions are due at the exact time specified on the assignment.</P>
+<P>You will not get full credit if the requirements and design documentation is 
+missing and/or sloppily put together. On the other hand, you will get partial 
+credit for a good analysis and a good design, even if your program is only a 
+partial solution. </P>
+<P>Code that does not compile will receive no credit. When you go to ask your 
+instructor or grader about your program, you are expected to take along all of the 
+appropriate documentation. </P>
+<P>B.3 Outline of the Contents for the Standard Documentation Folders</P>
+<DL>
+  <DT>I. Requirements Documentation 
+  <DD>1. Description of the Problem <BR>2. Input Information <BR>3. Output 
+  Information <BR>4. User Interface Information </DD></DL>
+<DL>
+  <DT>II. Design Documentation 
+  <DD>1. System Architecture Description <BR>2. Object Information <BR>3. System 
+  Driver Information <BR>4. Diagrams </DD></DL>
+<DL>
+  <DT>III. Implementation Documentation 
+  <DD>1. Program code </DD></DL>
+<DL>
+  <DT>VI. Verification &amp; Validation Documentation 
+  <DD>1. Test data <BR>2. Test results <BR>3. Operating directions </DD></DL>
+<P><B>C. Logical Aspects of the Documentation</B></P>
+<P>The remainder of this document further explains the content of each of the 
+four major sections of this documentation folder.  Always use the section titles and 
+numbers shown. </P>
+<P>I. Requirements Documentation</P>
+<P>The purpose of this section of the documentation is to define the problem 
+with sufficient detail so that the solution can be planned.</P>
+<P>I.1 Description of the Problem </P>
+<P><U>Name:</U> Give a short title. <BR><U>Problem Statement:</U> Tell what 
+needs to be done. (Approximately 1 or 2 sentences which provide a high level 
+description of the problem to be solved.) <BR><U>Problem Specification:</U> Give 
+a complete and detailed specification of the problem. State any assumptions you 
+have made regarding the problem. This specification is intended to provide a 
+real world description of the problem, its input, its output, and its 
+processing. <EM>No implementation-specific details should be included.</EM></P>
+<P>I.2 Input Information </P>
+<P>I.2.1 Input Streams: (Repeat the following information for each input stream; 
+that is, all files except the standard input file.)</P>
+<P><U>Name:</U> Give the names of each input stream. <BR><U>Description:</U> How 
+is it used? What is its purpose? <BR><U>Format:</U> Explain how the data are 
+organized and formatted in the input stream, if relevant. <BR><U>Size:</U> The 
+maximum number of lines (or records, or items) expected (is the number fixed or 
+variable? if variable, is there a minimum and/or maximum?) <BR><U>Sample:</U> 
+Show a sample of properly formatted input. </P>
+<P>I.2.2. Input Items: (Repeat the following for each program input.)</P>
+<P><U>Description:</U> Tell what the input means (or is used 
+for).<BR><U>Type:</U> Indicate its logical data type. (Ex. integer, 
+alphanumeric, single digit, real, etc.)<BR><U>Range of acceptable values:</U> 
+Identify the acceptable range for this program, if applicable. </P>
+<P>I.3 Output Information</P>
+<P>Output Streams: (Repeat the following for each output stream; that is, all files
+except the standard ouput file.)</P>
+<P><U>Name:</U> Give the name of each output stream.<BR><U>Description:</U> How 
+is it used? What is its purpose?<BR><U>Format:</U> Explain how the data are 
+organized and formatted in the output stream.<BR><U>Size:</U> The maximum number 
+of lines (or records, or items) expected (is the number fixed or variable? if 
+variable, is there a minimum and/or maximum?) <BR><U>Sample:</U> Show a sample 
+of properly formatted output. </P>
+<P>Output Items: (Repeat the following for each value output by the program.)</P>
+<P><U>Description:</U> Tell what the output element means (or is used 
+for).<BR><U>Type:</U> Indicate its logical data type. (Ex. integer, 
+alphanumeric, single digit, real, etc.) <BR><U>Range of acceptable values:</U> 
+Identify the acceptable range for this program, if applicable. </P>
+<P>I.4 User Interface Information </P>
+<P>1.4.1 Description:</P>
+<P>The nature of the user interface, which determines how the user will interact 
+with the program, must be described. (Typical types of user interfaces in 
+common use include: menu selection, form fill-in, command language, and direct 
+manipulation (graphical, point &amp; click)). </P>
+<P>For a menu driven interface, show the menu and any other dialogs that
+the program may initiate.</P>
+<UL>
+<LI>Show the menu exactly as it will be displayed by the program.</LI>
+<LI>For prompts, show the exact wording of what will be displayed.</LI>
+<LI>List all possible error messages, in the exact wording they will be displayed.</LI>
+<LI>Give the label and format of all the output generated by the program. </LI>
+<LI>If the program generates a table, give the exact format of the displayed table.</LI>
+</UL>
+<P>II. Design Documentation <BR>The purpose of this section of the documentation 
+is to describe a plan for the solution of the problem using an object-oriented 
+design method. </P>
+<P>The solution to a problem will usually consist of a software system that is 
+comprised of a main application and a set of interacting objects. The 
+application consists of the algorithm that orchestrates the usage of the 
+objects in the system.<BR><BR>Adhere to recommended good programming practices, 
+such as: </P>
+<UL>
+  <LI>Make certain that components are loosely coupled; i.e, avoid global 
+  objects and variables. 
+  <LI>Implement operations using the most appropriate type of subroutines; 
+  i.e.;procedures or functions. 
+  <LI>Pass parameters by value or by reference as appropriate. 
+  <LI>Make certain that components are highly cohesive. </LI>
+  <LI>Make a member function "const" whenever appropriate.</LI>
+  <LI>Make parameters "const" whenever appropriate.</LI>
+</UL>
+<P>II.1 System Architecture Description </P>
+<P>This section includes the main application and the objects that comprise the 
+system. First list the objects and their respective classes, and then, for the
+application and each object briefly describe its role in the overall system. Make sure that
+you describe how the objects interact with the main application, and with each other.</P>
+<P>II.2 Information about the Objects </P>
+<P>For each class specification, include the following text and information: 
+</P>
+<P><I>Class Information </I></P>
+<P>Name: Name the class. <BR>Description: Briefly describe its purpose. <BR>Base 
+Class: Identify the base class, if appropriate </P>
+<P>Class Attributes (data members) (Repeat for each attribute.) <BR>Name: Name 
+the attribute. <BR>Description: Briefly describe its function or purpose. 
+<BR>Type: Indicate its data type or class. <BR>Range of acceptable values: 
+Identify the acceptable range of values. <BR>(Note: Usually the attributes of an 
+object are placed in the private view of the class specification.) </P>
+<P>Class Operations (member functions)(Repeat for each operation.) <BR>Prototype: Give the 
+operation/function prototype, including the type(s) and name(s) of formal parameter(s). 
+<BR>Description: Briefly describe the task it performs. 
+<BR>Precondition(s): Give input assertion(s) describing the truths that the 
+operation expects at the moment the caller invokes the function 
+<BR>Postcondition(s): Give output assertion(s) describing the state of the 
+computation at the moment the function terminates. <BR>Cost analysis: specifiy using 
+Big-OH notation, the expected run-time behavior of the operation.
+<BR>Visibility: public, protected, or private </P>
+
+<P>II.3 Information about the Main Application</P>
+<P>In an object-oriented design the main application is the coordinating algorithm 
+of the software product. The application may consist of several subroutines. Often 
+the it is only responsible for processing user commands and then delegating 
+tasks to objects. </P>
+<P>This section describes how the main application 
+controls the software. The description of the main application must include the 
+detailed logic of the algorithym, including flow of control. This description must 
+be presented in the form of a psuedocode algorithm with declarations.  This main program does not have to compile. 
+If free functions
+exist in the main program, give the prototype for these functions along with the 
+respective descriptions,
+preconditions, and postconditions.
+<BR><BR>
+If the main program does not handle the principal object manipulation, include
+a thorough algorithm for the member function that is responsible for the job.
+<BR><BR>
+All function calls (including calls to member functions) must specify all required
+parameters.
+</P>
+<P>II.4 Design Diagrams </P>
+<P>The design effort will be summarized in two diagrams: </P>
+<P>Object Interaction Diagram <BR>Show a diagram that illustrates the calling 
+interaction of the system. This diagram consists of an ellipse for the system 
+driver, a box for each object, and directed lines from clients to servers. Each 
+box contains the name of the object and its class and its operations. </P>
+<P>Aggregation Diagram <BR>Show an aggregation diagram for all classes that have 
+aggregates. The aggregation diagrams will be kept very simple. One diagram will 
+be needed for each aggregation relationship. Each relationship will include the 
+object that contains or exclusively manages the object of another class, and the 
+object of that other class. Each class will be represented exclusively by its 
+name, and the relationship will be indicated by a directed line, from container 
+to contained. On the directed line, the cardinality (1:1, 1:n, etc.) of the 
+relationship will be indicated. </P>
+<P>III. Implementation Documentation </P>
+<P>The purpose of this documentation is to present a well-engineered version of 
+the program, along with information needed to clarify how it has been 
+encoded.</P>
+<P>III.1 Program Code (Source Code)</P>
+<P>The source listing is included here. The following describes the required 
+organization and internal documentation for the program.</P>
+<P><I>Physical Organization of System Components:</I> It is expected that 
+different components of the system architecture will appear in different 
+compilation units, provided that the implementation language/environment 
+supports this type of organization. Information is to be shared among components 
+through the inclusion of header files (when feasible). The first thing to appear 
+on every source file is the programmer identification and the authenticity certification.</P>
+<P><I>Comments:</I> You should import the program design information from your 
+design documentation and build your code around the design. Comments should be 
+used when the encoding or translation of a design is not obvious. </P>
+<UL>
+  <LI>System documentation (should appear in your main application component): 
+  Programmer information -- (import from the beginning of written 
+  documentation)<BR>Problem statement -- (import from Requirements Doc. part 1) 
+  <BR>Problem specification -- (import from Requirements Doc. part 1) <BR>System 
+  architecture description -- (import from Design Doc.) 
+  <LI>Component documentation: Each component should include as introductory 
+  documentation, the name of the source file it is located in, and the general 
+  description of its role in the system from the System Architecture Description 
+  (import from Design Doc, section II.1). 
+  <LI>Class and object documentation: For each class import from Design Doc., 
+  the relevant information from section II.2. </LI></UL>
+<P><I>Style: </I>Programming style refers to those conventions that enhance the 
+readability of programs. Some of those conventions include: </P>
+<UL>
+  <LI>Prettyprinting: Use indentation and skipped lines so that the visual 
+  appearance of a program listing mirrors its logical structure. (Be consistent 
+  with your indentation increments!). Declare only one data item per line. For 
+  each declared data item include a brief comment documenting its purpose. Write 
+  only one program statement per line. 
+  <LI>Meaningful identifier names: Well-chosen identifiers significantly enhance 
+  readability, and as such is considered a significant element of internal 
+  program documentation. Identifiers should 
+  <UL>
+    <LI>be meaningful; avoid cuteness, single-letter identifiers, meaningless 
+    abbreviations, identifiers that too closely resemble one another. (ex. HT is 
+    not a meaningful variable name for a hash table.) 
+    <LI>be accurate (ex. COUNT is not the best name for an integer that indexes 
+    an array; object names should indicate entities, operation names should 
+    indicate actions) 
+    <LI>observe standards for abbreviations, prefixes, and suffixes.</LI></UL>
+  <LI>Organizational consistency: Be systematic in grouping and ordering of 
+  declarations. For example, declared variables might be grouped by similar 
+  role, or listed alphabetically, but should not appear in random order. The 
+  same applies for all other declarations, such as subprogram declarations. 
+</LI></UL>
+<P>IV. Verification and Validation Documentation </P>
+<P>The purpose of this documentation is to demonstrate the operation of the 
+program, describe how it is run on the machine, and present evidence of program 
+verification and validation. (This information should be divided into the 
+following three parts:) </P>
+<P>IV.1 Test Plan </P>
+<P>Include a list of input data sets which thoroughly test the logic of the 
+program and demonstrate that the program satisfies its requirements. Explain 
+what requirement of the problem will be exercised by each set of test data. (The 
+test plan should be prepared at the time the Requirements Documentation is 
+written.) </P>
+<P>IV.2 Test Results </P>
+<P>Include a script file showing the results of running the program with the 
+test data set. The output listing should be marked, if necessary, so that 
+corresponding input can be identified for each output. That is, if the test data 
+or program logic being exercised by this test is not obvious, mark the output 
+listing with this information. </P>
+<P>IV.3 Operating Directions</P>
+<P>Every program MUST be submitted along with a makefile that will create an 
+executable from the source files submitted. The following information should be 
+included in the written documentation:</P>
+<OL>
+  <LI>The names and locations of all files submitted: program (source) file, 
+  input data files, and makefiles. (DO NOT MODIFY ANY OF THE FILES AFTER 
+  SUBMITTING THEM.) 
+  <LI>Directions on how to use the makefile (build the executable) and the name 
+  of the executable(s) that will be generated. 
+  <LI>Directions on how to run the generated executable. 
+  <LI>If your program does not work, or has bugs, indicate so and explain what 
+  parts of the program worked and what restrictions and/or cautions must be 
+  exercised to avoid problems. </LI></OL></BODY></HTML>
